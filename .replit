@@ -1,5 +1,5 @@
-run = "npx expo start --tunnel"
-modules = ["nodejs-20"]
+run = "npm install && npx expo start --tunnel"
+modules = ["nodejs-18:v18.19.0"]
 hidden = [".git", "node_modules"]
 
 [nix]
@@ -10,18 +10,6 @@ XDG_CONFIG_HOME = "/home/runner/.config"
 PATH = "/home/runner/$REPL_SLUG/.config/npm/node_global/bin:/home/runner/$REPL_SLUG/node_modules/.bin"
 npm_config_prefix = "/home/runner/$REPL_SLUG/.config/npm/node_global"
 
-[packager]
-language = "nodejs"
-  [packager.features]
-  packageSearch = true
-  guessImports = true
-  enabledForHosting = false
-
-[languages]
-[languages.javascript]
-pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
-  [languages.javascript.languageServer]
-  start = "typescript-language-server --stdio"
-
 [deployment]
-run = ["sh", "-c", "npx expo start --tunnel"]
+run = ["sh", "-c", "npm install && npx expo start --tunnel"]
+deploymentTarget = "cloudrun"
