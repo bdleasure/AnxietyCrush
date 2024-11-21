@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform, StyleSheet, useSafeAreaInsets } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
@@ -9,6 +9,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { ProgressScreen } from '../screens/ProgressScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { UpgradeScreen } from '../screens/UpgradeScreen';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator();
 
@@ -31,18 +32,30 @@ const TAB_ICON = {
   },
 };
 
-export const MainNavigator = () => {
+const TabBarBackground = () => {
   const insets = useSafeAreaInsets();
+  
+  useEffect(() => {
+    console.log('SafeArea insets:', insets);
+  }, [insets]);
 
   return (
+    <View style={[StyleSheet.absoluteFill, { height: 60 + (insets?.bottom || 0) }]}>
+      <BlurView tint="dark" intensity={100} style={StyleSheet.absoluteFill} />
+    </View>
+  );
+};
+
+export const MainNavigator = () => {
+  const insets = useSafeAreaInsets();
+  
+  useEffect(() => {
+    console.log('MainNavigator SafeArea insets:', insets);
+  }, [insets]);
+  
+  return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          const iconName = focused
-            ? TAB_ICON[route.name].active
-            : TAB_ICON[route.name].inactive;
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
+      screenOptions={{
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textSecondary,
         headerShown: false,
@@ -51,26 +64,23 @@ export const MainNavigator = () => {
           borderTopWidth: 0,
           backgroundColor: 'transparent',
           elevation: 0,
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom,
+          height: 60 + (insets?.bottom || 0),
+          paddingBottom: insets?.bottom || 0,
         },
-        tabBarBackground: () => (
-          <BlurView
-            tint="dark"
-            intensity={100}
-            style={[
-              StyleSheet.absoluteFill,
-              { height: 60 + insets.bottom }
-            ]}
-          />
-        ),
-        tabBarLabelStyle: styles.tabBarLabel,
-      })}
+        tabBarBackground: () => <TabBarBackground />,
+      }}
     >
       <Tab.Screen 
         name="Sessions" 
         component={SessionPlayer}
         options={{
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons 
+              name={focused ? TAB_ICON.Sessions.active : TAB_ICON.Sessions.inactive} 
+              size={size} 
+              color={color} 
+            />
+          ),
           tabBarLabel: 'Waves',
         }}
       />
@@ -78,6 +88,13 @@ export const MainNavigator = () => {
         name="Progress" 
         component={ProgressScreen}
         options={{
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons 
+              name={focused ? TAB_ICON.Progress.active : TAB_ICON.Progress.inactive} 
+              size={size} 
+              color={color} 
+            />
+          ),
           tabBarLabel: 'Progress',
         }}
       />
@@ -85,6 +102,13 @@ export const MainNavigator = () => {
         name="Profile" 
         component={ProfileScreen}
         options={{
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons 
+              name={focused ? TAB_ICON.Profile.active : TAB_ICON.Profile.inactive} 
+              size={size} 
+              color={color} 
+            />
+          ),
           tabBarLabel: 'Profile',
         }}
       />
@@ -101,6 +125,13 @@ export const MainNavigator = () => {
         name="Settings" 
         component={SettingsScreen}
         options={{
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons 
+              name={focused ? TAB_ICON.Settings.active : TAB_ICON.Settings.inactive} 
+              size={size} 
+              color={color} 
+            />
+          ),
           tabBarLabel: 'Settings',
         }}
       />

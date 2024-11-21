@@ -24,6 +24,6 @@ npm cache clean --force
 print_message "Installing dependencies..."
 npm install --legacy-peer-deps
 
-# Start the app
-print_message "Starting Expo with tunnel mode..."
-EXPO_NO_DOTENV=1 npx expo start --tunnel --clear
+# Start the app with debug logging
+print_message "Starting Expo with debug logging..."
+EXPO_DEBUG=1 EXPO_NO_DOTENV=1 npx expo start --tunnel --clear
