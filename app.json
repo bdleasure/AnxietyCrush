@@ -16,16 +16,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anxietycrush.app",
-      "newArchEnabled": true
+      "bundleIdentifier": "com.anxietycrush.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anxietycrush.app",
-      "newArchEnabled": true
+      "package": "com.anxietycrush.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
