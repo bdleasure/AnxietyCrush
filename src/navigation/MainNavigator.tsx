@@ -9,7 +9,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { ProgressScreen } from '../screens/ProgressScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { UpgradeScreen } from '../screens/UpgradeScreen';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator();
 
@@ -32,110 +32,95 @@ const TAB_ICON = {
   },
 };
 
-const TabBarBackground = () => {
-  const insets = useSafeAreaInsets();
-  
-  useEffect(() => {
-    console.log('SafeArea insets:', insets);
-  }, [insets]);
-
-  return (
-    <View style={[StyleSheet.absoluteFill, { height: 60 + (insets?.bottom || 0) }]}>
-      <BlurView tint="dark" intensity={100} style={StyleSheet.absoluteFill} />
-    </View>
-  );
-};
+const TabBarBackground = () => (
+  <BlurView tint="dark" intensity={100} style={StyleSheet.absoluteFill} />
+);
 
 export const MainNavigator = () => {
-  const insets = useSafeAreaInsets();
-  
-  useEffect(() => {
-    console.log('MainNavigator SafeArea insets:', insets);
-  }, [insets]);
-  
   return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textSecondary,
-        headerShown: false,
-        tabBarStyle: {
-          position: 'absolute',
-          borderTopWidth: 0,
-          backgroundColor: 'transparent',
-          elevation: 0,
-          height: 60 + (insets?.bottom || 0),
-          paddingBottom: insets?.bottom || 0,
-        },
-        tabBarBackground: () => <TabBarBackground />,
-      }}
-    >
-      <Tab.Screen 
-        name="Sessions" 
-        component={SessionPlayer}
-        options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons 
-              name={focused ? TAB_ICON.Sessions.active : TAB_ICON.Sessions.inactive} 
-              size={size} 
-              color={color} 
-            />
-          ),
-          tabBarLabel: 'Waves',
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <Tab.Navigator
+        screenOptions={{
+          tabBarActiveTintColor: colors.accent,
+          tabBarInactiveTintColor: colors.textSecondary,
+          headerShown: false,
+          tabBarStyle: {
+            position: 'absolute',
+            borderTopWidth: 0,
+            backgroundColor: 'transparent',
+            elevation: 0,
+            height: Platform.select({ ios: 90, android: 60 }),
+          },
+          tabBarBackground: () => <TabBarBackground />,
         }}
-      />
-      <Tab.Screen 
-        name="Progress" 
-        component={ProgressScreen}
-        options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons 
-              name={focused ? TAB_ICON.Progress.active : TAB_ICON.Progress.inactive} 
-              size={size} 
-              color={color} 
-            />
-          ),
-          tabBarLabel: 'Progress',
-        }}
-      />
-      <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons 
-              name={focused ? TAB_ICON.Profile.active : TAB_ICON.Profile.inactive} 
-              size={size} 
-              color={color} 
-            />
-          ),
-          tabBarLabel: 'Profile',
-        }}
-      />
-      <Tab.Screen 
-        name="Upgrade"
-        component={UpgradeScreen}
-        options={{
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="diamond" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen 
-        name="Settings" 
-        component={SettingsScreen}
-        options={{
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons 
-              name={focused ? TAB_ICON.Settings.active : TAB_ICON.Settings.inactive} 
-              size={size} 
-              color={color} 
-            />
-          ),
-          tabBarLabel: 'Settings',
-        }}
-      />
-    </Tab.Navigator>
+      >
+        <Tab.Screen 
+          name="Sessions" 
+          component={SessionPlayer}
+          options={{
+            tabBarIcon: ({ focused, color, size }) => (
+              <Ionicons 
+                name={focused ? TAB_ICON.Sessions.active : TAB_ICON.Sessions.inactive} 
+                size={size} 
+                color={color} 
+              />
+            ),
+            tabBarLabel: 'Waves',
+          }}
+        />
+        <Tab.Screen 
+          name="Progress" 
+          component={ProgressScreen}
+          options={{
+            tabBarIcon: ({ focused, color, size }) => (
+              <Ionicons 
+                name={focused ? TAB_ICON.Progress.active : TAB_ICON.Progress.inactive} 
+                size={size} 
+                color={color} 
+              />
+            ),
+            tabBarLabel: 'Progress',
+          }}
+        />
+        <Tab.Screen 
+          name="Profile" 
+          component={ProfileScreen}
+          options={{
+            tabBarIcon: ({ focused, color, size }) => (
+              <Ionicons 
+                name={focused ? TAB_ICON.Profile.active : TAB_ICON.Profile.inactive} 
+                size={size} 
+                color={color} 
+              />
+            ),
+            tabBarLabel: 'Profile',
+          }}
+        />
+        <Tab.Screen 
+          name="Upgrade"
+          component={UpgradeScreen}
+          options={{
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="diamond" size={24} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen 
+          name="Settings" 
+          component={SettingsScreen}
+          options={{
+            tabBarIcon: ({ focused, color, size }) => (
+              <Ionicons 
+                name={focused ? TAB_ICON.Settings.active : TAB_ICON.Settings.inactive} 
+                size={size} 
+                color={color} 
+              />
+            ),
+            tabBarLabel: 'Settings',
+          }}
+        />
+      </Tab.Navigator>
+    </SafeAreaView>
   );
 };
 
