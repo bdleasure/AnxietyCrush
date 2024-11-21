@@ -1,26 +1,24 @@
 export const colors = {
   // Base colors
-  primary: '#2E1A47', // Deep space purple
-  secondary: '#007AFF', // Electric blue
-  accent: '#FFD700', // Gold
-  success: '#34C759', // Success green
-
+  background: '#1a1a2e', // Deep space purple base
+  cardBackground: '#232342',
+  
   // Text colors
-  textPrimary: '#FFFFFF',
-  textSecondary: '#CCCCCC',
-  textMuted: '#999999',
-
-  // Background colors
-  background: '#1A0F2E',
-  surfaceLight: '#3C2A5A',
-  surfaceDark: '#251840',
-
-  // Status colors
-  error: '#FF3B30',
-  warning: '#FF9500',
-  info: '#5856D6',
-
-  // Gradients
-  gradientStart: '#2E1A47',
-  gradientEnd: '#1A0F2E',
+  textPrimary: '#ffffff',
+  textSecondary: '#a0a0c0',
+  
+  // Accent colors
+  primary: '#4a4af4', // Electric blue
+  secondary: '#2d2d6d',
+  accent: '#ffd700', // Gold highlights
+  danger: '#ff4757',
+  
+  // Progress colors
+  progressBackground: '#2d2d6d',
+  success: '#4cd964', // Success green
+  
+  // Additional UI colors
+  border: '#34345a',
+  placeholder: '#666687',
+  disabled: '#3f3f63',
 };

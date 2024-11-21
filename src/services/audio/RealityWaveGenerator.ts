@@ -1,22 +1,49 @@
 import { Audio } from 'expo-av';
 
+export enum SessionType {
+  ANXIETY_CRUSHER = 'anxiety_crusher',
+  EMERGENCY_RESET = 'emergency_reset',
+  DEEP_PROGRAMMING = 'deep_programming'
+}
+
 interface AudioTrack {
   id: string;
   name: string;
   description: string;
   duration: number; // in minutes
-  file: any; // require('../../../assets/audio/filename.mp3')
+  type: SessionType;
+  file: any;
+  frequency?: number; // Alpha wave frequency in Hz
 }
 
 export const AVAILABLE_TRACKS: AudioTrack[] = [
   {
-    id: 'alpha_wave_1',
-    name: 'Alpha Wave Meditation',
-    description: 'Deep relaxation with 10Hz alpha waves',
-    duration: 10,
-    file: require('../../../assets/audio/placeholder.mp3'), // You'll need to add your audio file
+    id: 'anxiety_crusher_1',
+    name: '11-Minute Anxiety Crusher™',
+    description: 'Transform anxiety with our primary Reality Wave™ session',
+    duration: 11,
+    type: SessionType.ANXIETY_CRUSHER,
+    frequency: 10, // 10 Hz Alpha waves
+    file: require('../../../assets/audio/11-Minute Anxiety Crusher.mp3'),
   },
-  // Add more tracks here
+  {
+    id: 'emergency_reset_1',
+    name: '3-Minute Emergency Reset™',
+    description: 'Quick anxiety relief for urgent situations',
+    duration: 3,
+    type: SessionType.EMERGENCY_RESET,
+    frequency: 10,
+    file: require('../../../assets/audio/3-Minute Emergency Reset.mp3'),
+  },
+  {
+    id: 'deep_programming_1',
+    name: '30-Minute Deep Reality Programming™',
+    description: 'Extended session for deep anxiety transformation',
+    duration: 30,
+    type: SessionType.DEEP_PROGRAMMING,
+    frequency: 10,
+    file: require('../../../assets/audio/30-Minute Deep Reality Programming.mp3'),
+  }
 ];
 
 export class RealityWaveGenerator {
@@ -24,6 +51,7 @@ export class RealityWaveGenerator {
   private isPlaying: boolean = false;
   private volume: number = 0.5;
   private currentTrack: AudioTrack | null = null;
+  private sessionStartTime: Date | null = null;
 
   constructor() {
     this.initializeAudio();
@@ -46,58 +74,70 @@ export class RealityWaveGenerator {
 
   async loadTrack(track: AudioTrack) {
     try {
-      // Unload previous track if exists
       if (this.sound) {
         await this.sound.unloadAsync();
-        this.sound = null;
       }
 
-      const { sound } = await Audio.Sound.createAsync(
-        track.file,
-        { 
-          isLooping: true,
-          volume: this.volume,
-          shouldPlay: false,
-        },
-        (status) => {
-          // Handle playback status updates
-          if (status.didJustFinish) {
-            // Handle track completion if needed
-            console.log('Track finished playing');
-          }
-        }
-      );
+      console.log('Loading track:', track.name);
+      const { sound } = await Audio.Sound.createAsync(track.file, {
+        shouldPlay: false,
+        volume: this.volume,
+        isLooping: false, // We'll handle session completion
+      });
 
       this.sound = sound;
       this.currentTrack = track;
+      console.log('Successfully loaded track:', track.name);
     } catch (error) {
       console.error('Failed to load track:', error);
+      this.sound = null;
+      this.currentTrack = null;
       throw error;
     }
   }
 
   async startRealityWave(track?: AudioTrack) {
     try {
-      if (this.isPlaying) {
-        return;
-      }
-
-      // If a new track is specified or no track is loaded, load it
-      if (track && track !== this.currentTrack) {
+      if (track && (!this.currentTrack || this.currentTrack.id !== track.id)) {
         await this.loadTrack(track);
-      } else if (!this.sound && AVAILABLE_TRACKS.length > 0) {
-        // Load default track if none specified
-        await this.loadTrack(AVAILABLE_TRACKS[0]);
       }
 
-      if (this.sound) {
-        await this.sound.playAsync();
-        this.isPlaying = true;
+      if (!this.sound || !this.currentTrack) {
+        throw new Error('No track loaded');
       }
+
+      this.sessionStartTime = new Date();
+      await this.sound.playAsync();
+      this.isPlaying = true;
+
+      // Set up completion handler
+      this.sound.setOnPlaybackStatusUpdate(async (status: any) => {
+        if (status.didJustFinish) {
+          await this.handleSessionComplete();
+        }
+      });
+
     } catch (error) {
       console.error('Failed to start Reality Wave:', error);
       throw error;
     }
+  }
+
+  private async handleSessionComplete() {
+    if (this.currentTrack && this.sessionStartTime) {
+      const sessionEndTime = new Date();
+      const duration = (sessionEndTime.getTime() - this.sessionStartTime.getTime()) / 1000 / 60; // in minutes
+      
+      // Here we'll add progress tracking later
+      console.log('Session completed:', {
+        trackName: this.currentTrack.name,
+        duration: duration,
+        type: this.currentTrack.type
+      });
+    }
+    
+    this.isPlaying = false;
+    this.sessionStartTime = null;
   }
 
   async stopRealityWave() {
@@ -105,6 +145,7 @@ export class RealityWaveGenerator {
       if (this.sound) {
         await this.sound.stopAsync();
         this.isPlaying = false;
+        this.sessionStartTime = null;
       }
     } catch (error) {
       console.error('Failed to stop Reality Wave:', error);
@@ -124,15 +165,19 @@ export class RealityWaveGenerator {
     }
   }
 
+  getIsPlaying(): boolean {
+    return this.isPlaying;
+  }
+
   getCurrentTrack(): AudioTrack | null {
     return this.currentTrack;
   }
 
-  isCurrentlyPlaying(): boolean {
-    return this.isPlaying;
-  }
-
-  getVolume(): number {
-    return this.volume;
+  getSessionProgress(): number {
+    if (!this.sessionStartTime || !this.currentTrack) {
+      return 0;
+    }
+    const elapsed = (new Date().getTime() - this.sessionStartTime.getTime()) / 1000 / 60; // in minutes
+    return Math.min(1, elapsed / this.currentTrack.duration);
   }
 }
