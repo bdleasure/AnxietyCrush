@@ -1,4 +1,4 @@
-run = "npm install && npm install -g @expo/ngrok@^4.1.0 && npx expo start --tunnel"
+run = "npm install && npx expo start"
 modules = ["nodejs-18:v18.19.0"]
 hidden = [".git", "node_modules"]
 
@@ -11,5 +11,5 @@ PATH = "/home/runner/$REPL_SLUG/.config/npm/node_global/bin:/home/runner/$REPL_S
 npm_config_prefix = "/home/runner/$REPL_SLUG/.config/npm/node_global"
 
 [deployment]
-run = ["sh", "-c", "npm install && npm install -g @expo/ngrok@^4.1.0 && npx expo start --tunnel"]
+run = ["sh", "-c", "npm install && npx expo start"]
 deploymentTarget = "cloudrun"
