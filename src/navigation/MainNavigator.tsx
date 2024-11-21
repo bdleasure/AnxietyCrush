@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -8,8 +8,6 @@ import { SessionPlayer } from '../screens/SessionPlayer';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { ProgressScreen } from '../screens/ProgressScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import { UpgradeScreen } from '../screens/UpgradeScreen';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator();
 
@@ -38,19 +36,13 @@ const TabBarBackground = () => (
 
 export const MainNavigator = () => {
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+    <View style={styles.container}>
       <Tab.Navigator
         screenOptions={{
           tabBarActiveTintColor: colors.accent,
           tabBarInactiveTintColor: colors.textSecondary,
           headerShown: false,
-          tabBarStyle: {
-            position: 'absolute',
-            borderTopWidth: 0,
-            backgroundColor: 'transparent',
-            elevation: 0,
-            height: Platform.select({ ios: 90, android: 60 }),
-          },
+          tabBarStyle: styles.tabBar,
           tabBarBackground: () => <TabBarBackground />,
         }}
       >
@@ -65,7 +57,6 @@ export const MainNavigator = () => {
                 color={color} 
               />
             ),
-            tabBarLabel: 'Waves',
           }}
         />
         <Tab.Screen 
@@ -79,7 +70,6 @@ export const MainNavigator = () => {
                 color={color} 
               />
             ),
-            tabBarLabel: 'Progress',
           }}
         />
         <Tab.Screen 
@@ -92,16 +82,6 @@ export const MainNavigator = () => {
                 size={size} 
                 color={color} 
               />
-            ),
-            tabBarLabel: 'Profile',
-          }}
-        />
-        <Tab.Screen 
-          name="Upgrade"
-          component={UpgradeScreen}
-          options={{
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="diamond" size={24} color={color} />
             ),
           }}
         />
@@ -116,18 +96,30 @@ export const MainNavigator = () => {
                 color={color} 
               />
             ),
-            tabBarLabel: 'Settings',
           }}
         />
       </Tab.Navigator>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  tabBarLabel: {
-    fontWeight: '600',
-    fontSize: 12,
-    marginBottom: Platform.OS === 'ios' ? 0 : 8,
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  tabBar: {
+    position: 'absolute',
+    borderTopWidth: 0,
+    backgroundColor: 'transparent',
+    elevation: 0,
+    height: Platform.select({
+      ios: 85,
+      android: 60,
+    }),
+    paddingBottom: Platform.select({
+      ios: 25,
+      android: 0,
+    }),
   },
 });
