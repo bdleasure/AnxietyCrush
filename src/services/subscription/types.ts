@@ -25,4 +25,5 @@ export interface AudioTrackAccess {
   subtitle: string;
   duration: number;
   requiredTier: SubscriptionTier;
+  category: string;
 }
