@@ -195,38 +195,38 @@ export const SessionPlayer: React.FC = () => {
 
   const SessionCard = ({ track }: { track: AudioTrackAccess }) => {
     const isLocked = !featureAccess.hasAccessToTrack(track.id);
+    const isSelected = selectedTrack.id === track.id;
 
     return (
-      <TouchableOpacity
-        style={[
-          styles.sessionCard,
-          selectedTrack.id === track.id && styles.selectedCard,
-          isLocked && styles.lockedCard,
-        ]}
-        onPress={() => selectSession(track)}
-        disabled={isPlaying}
-      >
-        <View style={styles.sessionCardContent}>
-          <View style={styles.sessionInfo}>
-            <Text style={styles.sessionTitle}>
-              {track.name}
-              {isLocked && ' '}
-            </Text>
-            <Text style={styles.sessionSubtitle}>
-              {track.subtitle}
-            </Text>
-            <Text style={styles.sessionDescription}>
-              {isLocked ? `Unlock with ${track.requiredTier} Package` : track.description}
-            </Text>
-            <Text style={styles.sessionDuration}>
-              {track.duration} min
-            </Text>
+      <View style={styles.sessionCardContainer}>
+        <LinearGradient
+          colors={['#FFD700', '#9400D3']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[
+            styles.sessionCardBorder,
+            isSelected && styles.selectedCardBorder
+          ]}
+        >
+          <View style={[styles.sessionCard, isLocked && styles.lockedCard]}>
+            <TouchableOpacity
+              onPress={() => selectSession(track)}
+              disabled={isPlaying}
+              style={styles.sessionCardContent}
+            >
+              <View style={styles.sessionInfo}>
+                <Text style={styles.sessionTitle}>{track.name}{isLocked && ' 🔒'}</Text>
+                <Text style={styles.sessionSubtitle}>{track.subtitle}</Text>
+                <Text style={styles.sessionDescription}>
+                  {isLocked ? `Unlock with ${track.requiredTier} Package` : track.description}
+                </Text>
+                <Text style={styles.sessionDuration}>{track.duration} min</Text>
+              </View>
+              {isSelected && !isLocked && <View style={styles.selectedIndicator} />}
+            </TouchableOpacity>
           </View>
-          {selectedTrack.id === track.id && !isLocked && (
-            <View style={styles.selectedIndicator} />
-          )}
-        </View>
-      </TouchableOpacity>
+        </LinearGradient>
+      </View>
     );
   };
 
@@ -345,14 +345,25 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: Platform.OS === 'ios' ? 180 : 160, // Increased padding for tab bar + player
   },
+  sessionCardContainer: {
+    marginBottom: 15,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  sessionCardBorder: {
+    padding: 1.5,
+    borderRadius: 16,
+  },
+  selectedCardBorder: {
+    padding: 2.5,
+  },
   sessionCard: {
     backgroundColor: colors.cardBackground,
     borderRadius: 15,
-    marginBottom: 15,
     overflow: 'hidden',
   },
   sessionCardContent: {
-    padding: 20,
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
