@@ -103,7 +103,8 @@ const BonusCard = ({
 
 export const BonusVaultScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
+  // Initialize with the first content item's ID
+  const [selectedContentId, setSelectedContentId] = useState<string>(BONUS_CONTENT[0].id);
 
   return (
     <SafeAreaView style={styles.container}>
