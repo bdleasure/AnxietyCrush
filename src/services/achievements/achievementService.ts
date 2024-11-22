@@ -30,7 +30,7 @@ const ACHIEVEMENT_DEFINITIONS: { [key: string]: Omit<Achievement, 'currentProgre
     title: 'Pattern Breaker',
     description: 'Complete all session types',
     requiredProgress: 4, // Assuming 4 different session types
-    icon: 'unlock',
+    icon: 'lock-open',
   },
 };
 
