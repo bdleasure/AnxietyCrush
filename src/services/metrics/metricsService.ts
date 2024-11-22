@@ -13,6 +13,17 @@ const DEFAULT_METRICS: UserMetrics = {
 };
 
 class MetricsService {
+  async resetMetrics(): Promise<void> {
+    try {
+      await Promise.all([
+        AsyncStorage.removeItem(STORAGE_KEYS.USER_METRICS),
+        AsyncStorage.removeItem(STORAGE_KEYS.SESSION_RECORDS),
+      ]);
+    } catch (error) {
+      console.error('Error resetting metrics:', error);
+    }
+  }
+
   private async getStoredMetrics(): Promise<UserMetrics> {
     try {
       const metricsJson = await AsyncStorage.getItem(STORAGE_KEYS.USER_METRICS);
