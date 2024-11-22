@@ -1,18 +1,43 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, Platform } from 'react-native';
 import { colors } from '../theme/colors';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Achievement } from '../services/achievements/types';
+import { achievementService } from '../services/achievements/achievementService';
+import { AchievementCard } from '../components/AchievementCard';
 
-export const ProfileScreen = () => {
+interface Props {}
+
+export const ProfileScreen: React.FC<Props> = () => {
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+
+  useEffect(() => {
+    loadAchievements();
+  }, []);
+
+  const loadAchievements = async () => {
+    const loadedAchievements = await achievementService.getAchievements();
+    setAchievements(loadedAchievements);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.heading}>Profile</Text>
+        <Text style={styles.subheading}>Your Personal Journey</Text>
       </View>
-      <View style={styles.content}>
-        <Text style={styles.subtitle}>Your Personal Journey</Text>
-        {/* Add profile content here */}
-      </View>
+      
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <Text style={styles.sectionTitle}>Achievements</Text>
+        {achievements.map((achievement) => (
+          <AchievementCard
+            key={achievement.id}
+            achievement={achievement}
+          />
+        ))}
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -23,23 +48,31 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.secondary,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
   },
-  title: {
-    fontSize: 17.6,
-    fontWeight: 'bold',
+  heading: {
+    fontSize: 18,
     color: colors.textPrimary,
-    letterSpacing: 0.5,
+    fontWeight: 'bold',
   },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  subtitle: {
-    fontSize: 14.4,
+  subheading: {
+    fontSize: 13,
     color: colors.textSecondary,
     marginBottom: 20,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 100 : 80,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    color: colors.textPrimary,
+    fontWeight: 'bold',
+    marginBottom: 15,
   },
 });
