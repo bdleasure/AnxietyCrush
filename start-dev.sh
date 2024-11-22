@@ -9,6 +9,12 @@ print_message() {
 set -e
 trap 'echo -e "\033[1;31mAn error occurred. Exiting...\033[0m"' ERR
 
+# Check for EXPO_TOKEN environment variable
+if [ -n "$EXPO_TOKEN" ]; then
+    print_message "Logging into Expo..."
+    echo "y" | npx expo login --non-interactive -t $EXPO_TOKEN
+fi
+
 # Update from git
 print_message "Fetching latest changes from git..."
 git fetch origin
