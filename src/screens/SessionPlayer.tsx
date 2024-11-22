@@ -19,6 +19,7 @@ import { AudioTrackAccess, SubscriptionTier } from '../services/subscription/typ
 import { LinearGradient } from 'expo-linear-gradient';
 import { AudioControls } from '../components/AudioControls';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { metricsService } from '../services/metrics/metricsService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -71,13 +72,20 @@ export const SessionPlayer: React.FC = () => {
   }, [isPlaying, isSeeking, realityWave]);
 
   // Handle audio state changes
-  const handlePlaybackStatusUpdate = useCallback((status: any) => {
+  const handlePlaybackStatusUpdate = useCallback(async (status: any) => {
     if (status.didJustFinish) {
       setIsPlaying(false);
       setSessionTime(0);
       setProgress(0);
+      
+      // Record completed session
+      await metricsService.recordSession({
+        trackId: selectedTrack.id,
+        duration: selectedTrack.duration,
+        completed: true,
+      });
     }
-  }, []);
+  }, [selectedTrack]);
 
   useEffect(() => {
     realityWave.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);

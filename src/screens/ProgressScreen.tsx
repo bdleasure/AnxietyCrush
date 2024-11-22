@@ -1,16 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MetricCard } from '../components/MetricCard';
+import { metricsService } from '../services/metrics/metricsService';
+import { UserMetrics } from '../services/metrics/types';
+import { useNavigation } from '@react-navigation/native';
 
 export const ProgressScreen = () => {
-  // TODO: Replace with actual data from state management
-  const metrics = {
-    sessionsCompleted: 12,
-    currentStreak: 5,
-    realityScore: 78,
+  const navigation = useNavigation();
+  const [metrics, setMetrics] = useState<UserMetrics>({
+    sessionsCompleted: 0,
+    currentStreak: 0,
+    realityScore: 0,
+  });
+
+  useEffect(() => {
+    loadMetrics();
+  }, []);
+
+  const loadMetrics = async () => {
+    try {
+      const userMetrics = await metricsService.getUserMetrics();
+      setMetrics(userMetrics);
+    } catch (error) {
+      console.error('Error loading metrics:', error);
+    }
   };
+
+  // Refresh metrics when screen gains focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadMetrics();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   return (
     <SafeAreaView style={styles.container}>
