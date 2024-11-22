@@ -1,5 +1,5 @@
 import { SubscriptionTier, Feature, FeatureCategory, AudioTrackAccess } from './types';
-import { SESSION_DESCRIPTIONS } from '../../constants/strings';
+import { SESSION_DESCRIPTIONS, SESSION_SUBTITLES } from '../../constants/strings';
 
 // Define available tracks with their access requirements
 export const AUDIO_TRACKS: AudioTrackAccess[] = [
@@ -7,6 +7,7 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
     id: 'anxiety-relief',
     name: 'Anxiety Crusher™',
     description: SESSION_DESCRIPTIONS.ANXIETY_CRUSHER,
+    subtitle: SESSION_SUBTITLES.ANXIETY_CRUSHER,
     duration: 11,
     requiredTier: SubscriptionTier.FREE,
   },
@@ -14,6 +15,7 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
     id: 'emergency-reset',
     name: 'Emergency Reset™',
     description: SESSION_DESCRIPTIONS.EMERGENCY_RESET,
+    subtitle: SESSION_SUBTITLES.EMERGENCY_RESET,
     duration: 3,
     requiredTier: SubscriptionTier.FREE,
   },
@@ -21,6 +23,7 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
     id: 'deep-reality',
     name: 'Deep Reality Programming™',
     description: SESSION_DESCRIPTIONS.DEEP_REALITY,
+    subtitle: SESSION_SUBTITLES.DEEP_REALITY,
     duration: 30,
     requiredTier: SubscriptionTier.PREMIUM,
   },

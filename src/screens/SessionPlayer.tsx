@@ -202,7 +202,10 @@ export const SessionPlayer: React.FC = () => {
           <View style={styles.sessionInfo}>
             <Text style={styles.sessionTitle}>
               {track.name}
-              {isLocked && ' '}
+              {isLocked && ' 🔒'}
+            </Text>
+            <Text style={styles.sessionSubtitle}>
+              {track.subtitle}
             </Text>
             <Text style={styles.sessionDescription}>
               {isLocked ? `Unlock with ${track.requiredTier} Package` : track.description}
@@ -365,13 +368,18 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   sessionTitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.textPrimary,
     fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  sessionSubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
     marginBottom: 8,
   },
   sessionDescription: {
-    fontSize: 11,
+    fontSize: 13,
     color: colors.textSecondary,
     marginBottom: 4,
   },
