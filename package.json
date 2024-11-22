@@ -48,5 +48,15 @@
     "rimraf": "^5.0.5",
     "typescript": "^5.3.3"
   },
+  "overrides": {
+    "glob": "^9.3.5",
+    "rimraf": "^5.0.5",
+    "@xmldom/xmldom": "^0.8.10",
+    "uuid": "^9.0.1",
+    "@babel/plugin-proposal-optional-chaining": "@babel/plugin-transform-optional-chaining",
+    "@babel/plugin-proposal-nullish-coalescing-operator": "@babel/plugin-transform-nullish-coalescing-operator",
+    "@babel/plugin-proposal-class-properties": "@babel/plugin-transform-class-properties",
+    "inflight": "npm:lru-cache@^10.1.0"
+  },
   "private": true
 }
