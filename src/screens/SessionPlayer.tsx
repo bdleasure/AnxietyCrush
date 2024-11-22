@@ -17,6 +17,8 @@ import { BlurView } from 'expo-blur';
 import { featureAccess, AUDIO_TRACKS } from '../services/subscription/featureAccess';
 import { AudioTrackAccess, SubscriptionTier } from '../services/subscription/types';
 import { LinearGradient } from 'expo-linear-gradient';
+import { AudioControls } from '../components/AudioControls';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -27,6 +29,9 @@ export const SessionPlayer: React.FC = () => {
   const [selectedTrack, setSelectedTrack] = useState<AudioTrackAccess>(AUDIO_TRACKS[0]);
   const [realityWave] = useState(() => new RealityWaveGenerator());
   const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isSeeking, setIsSeeking] = useState(false);
+  const insets = useSafeAreaInsets();
 
   // Get available tracks based on user's subscription
   const availableTracks = featureAccess.getAvailableTracks();
@@ -39,14 +44,23 @@ export const SessionPlayer: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Update progress
+  // Update progress and handle audio state
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        const progress = realityWave.getSessionProgress();
-        setProgress(progress);
-        setSessionTime(prev => prev + 1);
+    if (isPlaying && !isSeeking) {
+      interval = setInterval(async () => {
+        try {
+          const currentPosition = await realityWave.getCurrentPosition();
+          const totalDuration = await realityWave.getDuration();
+          
+          if (totalDuration > 0) {
+            setProgress(currentPosition / totalDuration);
+            setSessionTime(currentPosition);
+            setDuration(totalDuration);
+          }
+        } catch (error) {
+          console.error('Error updating progress:', error);
+        }
       }, 1000);
     }
     return () => {
@@ -54,7 +68,56 @@ export const SessionPlayer: React.FC = () => {
         clearInterval(interval);
       }
     };
-  }, [isPlaying, realityWave]);
+  }, [isPlaying, isSeeking, realityWave]);
+
+  // Handle audio state changes
+  const handlePlaybackStatusUpdate = useCallback((status: any) => {
+    if (status.didJustFinish) {
+      setIsPlaying(false);
+      setSessionTime(0);
+      setProgress(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    realityWave.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
+    return () => {
+      realityWave.setOnPlaybackStatusUpdate(null);
+    };
+  }, [realityWave, handlePlaybackStatusUpdate]);
+
+  // Handle play/pause
+  const togglePlayPause = useCallback(async () => {
+    if (!featureAccess.hasAccessToTrack(selectedTrack.id)) {
+      showUpgradeDialog(selectedTrack);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      if (!isPlaying) {
+        await realityWave.startRealityWave(selectedTrack);
+        setIsPlaying(true);
+      } else {
+        setIsPlaying(false);
+        await realityWave.stopRealityWave();
+        setSessionTime(0);
+        setProgress(0);
+      }
+    } catch (error) {
+      console.error('Error toggling session:', error);
+      Alert.alert(
+        'Session Error',
+        'There was an error with the session. Please try again.',
+        [{ text: 'OK' }]
+      );
+      setIsPlaying(false);
+      setSessionTime(0);
+      setProgress(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [isPlaying, realityWave, selectedTrack]);
 
   // Handle session selection
   const selectSession = async (track: AudioTrackAccess) => {
@@ -63,13 +126,17 @@ export const SessionPlayer: React.FC = () => {
       return;
     }
 
-    if (isPlaying) {
-      await realityWave.stopRealityWave();
-      setIsPlaying(false);
+    try {
+      if (isPlaying) {
+        setIsPlaying(false);
+        await realityWave.stopRealityWave();
+      }
+      setSelectedTrack(track);
+      setSessionTime(0);
+      setProgress(0);
+    } catch (error) {
+      console.error('Error selecting session:', error);
     }
-    setSelectedTrack(track);
-    setSessionTime(0);
-    setProgress(0);
   };
 
   // Show upgrade dialog
@@ -93,43 +160,30 @@ export const SessionPlayer: React.FC = () => {
     );
   };
 
-  // Handle play/pause
-  const togglePlayPause = useCallback(async () => {
-    if (!featureAccess.hasAccessToTrack(selectedTrack.id)) {
-      showUpgradeDialog(selectedTrack);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      if (!isPlaying) {
-        await realityWave.startRealityWave(selectedTrack);
-        setIsPlaying(true);
-      } else {
-        await realityWave.stopRealityWave();
-        setIsPlaying(false);
-        setSessionTime(0);
-        setProgress(0);
-      }
-    } catch (error) {
-      console.error('Error toggling session:', error);
-      Alert.alert(
-        'Session Error',
-        'There was an error with the session. Please try again.',
-        [{ text: 'OK' }]
-      );
-      setIsPlaying(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [isPlaying, realityWave, selectedTrack]);
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       realityWave.stopRealityWave();
     };
   }, [realityWave]);
+
+  const handleSeek = useCallback(async (position: number) => {
+    try {
+      setIsSeeking(true);
+      await realityWave.seekTo(position);
+      setSessionTime(position);
+      setProgress(position / selectedTrack.duration);
+    } catch (error) {
+      console.error('Error seeking:', error);
+    } finally {
+      setIsSeeking(false);
+    }
+  }, [realityWave, selectedTrack.duration]);
+
+  const handleSeeking = useCallback((value: number) => {
+    setSessionTime(value);
+    setProgress(value / selectedTrack.duration);
+  }, [selectedTrack.duration]);
 
   const SessionCard = ({ track }: { track: AudioTrackAccess }) => {
     const isLocked = !featureAccess.hasAccessToTrack(track.id);
@@ -190,42 +244,62 @@ export const SessionPlayer: React.FC = () => {
         {Object.entries(groupedTracks).map(([category, tracks]) => (
           <View key={category}>
             {renderCategoryHeader(category)}
-            {tracks.map((track) => (
+            {tracks.map(track => (
               <SessionCard key={track.id} track={track} />
             ))}
           </View>
         ))}
       </ScrollView>
 
-      <BlurView intensity={100} tint="dark" style={styles.playerContainer}>
-        <View style={styles.progressContainer}>
-          <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+      {/* Audio Controls */}
+      {selectedTrack && (
+        <View style={[
+          styles.audioControlsContainer,
+          { paddingBottom: insets.bottom + 60 }
+        ]}>
+          <AudioControls 
+            audioPlayer={realityWave}
+            isPlaying={isPlaying}
+            duration={duration}
+            position={sessionTime}
+            onPlayPause={togglePlayPause}
+            onSeek={handleSeek}
+            onSeeking={handleSeeking}
+          />
         </View>
+      )}
 
-        <View style={styles.controlsContainer}>
-          <View style={styles.timerContainer}>
-            <Text style={styles.timerText}>{formatTime(sessionTime)}</Text>
-            <Text style={styles.sessionName} numberOfLines={1}>
-              {selectedTrack.name}
-            </Text>
+      {isPlaying && (
+        <BlurView intensity={100} tint="dark" style={styles.playerContainer}>
+          <View style={styles.progressContainer}>
+            <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
           </View>
-          
-          <TouchableOpacity
-            style={[styles.button, isPlaying && styles.buttonActive]}
-            onPress={togglePlayPause}
-            disabled={loading}
-            activeOpacity={0.7}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.textPrimary} />
-            ) : (
-              <Text style={styles.buttonText}>
-                {isPlaying ? 'Stop' : 'Start'}
+
+          <View style={styles.controlsContainer}>
+            <View style={styles.timerContainer}>
+              <Text style={styles.timerText}>{formatTime(sessionTime)}</Text>
+              <Text style={styles.sessionName} numberOfLines={1}>
+                {selectedTrack.name}
               </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </BlurView>
+            </View>
+            
+            <TouchableOpacity
+              style={[styles.button, isPlaying && styles.buttonActive]}
+              onPress={togglePlayPause}
+              disabled={loading}
+              activeOpacity={0.7}
+            >
+              {loading ? (
+                <ActivityIndicator color={colors.textPrimary} />
+              ) : (
+                <Text style={styles.buttonText}>
+                  {isPlaying ? 'Stop' : 'Start'}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </BlurView>
+      )}
     </SafeAreaView>
   );
 };
@@ -369,5 +443,16 @@ const styles = StyleSheet.create({
   lockedCard: {
     opacity: 0.8,
     borderColor: colors.secondary,
+  },
+  audioControlsContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.secondary,
+    zIndex: 1000, // Ensure controls are above other elements
   },
 });

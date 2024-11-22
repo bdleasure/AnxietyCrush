@@ -2,54 +2,27 @@ import { SubscriptionTier, Feature, FeatureCategory, AudioTrackAccess } from './
 
 // Define available tracks with their access requirements
 export const AUDIO_TRACKS: AudioTrackAccess[] = [
-  // Core Wave Protocols
   {
-    id: 'anxiety-crusher-11',
-    name: '11-Minute Anxiety Crusher™',
-    requiredTier: SubscriptionTier.CORE,
+    id: 'anxiety-relief',
+    name: 'Anxiety Crusher™',
+    description: 'Transform anxiety with our primary Reality Wave session',
     duration: 11,
-    category: 'Core Wave',
-    isPreview: true
+    requiredTier: SubscriptionTier.FREE,
   },
   {
-    id: 'emergency-crush-3',
-    name: '3-Minute Emergency Crush™',
-    requiredTier: SubscriptionTier.CORE,
+    id: 'emergency-reset',
+    name: 'Emergency Reset™',
+    description: 'Quick anxiety relief for urgent situations',
     duration: 3,
-    category: 'Core Wave'
+    requiredTier: SubscriptionTier.FREE,
   },
   {
-    id: 'deep-reality-30',
-    name: '30-Minute Deep Reality Programming™',
-    requiredTier: SubscriptionTier.CORE,
+    id: 'deep-reality',
+    name: 'Deep Reality Programming™',
+    description: 'Extended session for deep anxiety transformation',
     duration: 30,
-    category: 'Core Wave'
+    requiredTier: SubscriptionTier.PREMIUM,
   },
-  
-  // Master Tier Tracks
-  {
-    id: 'money-anxiety-crusher',
-    name: 'Money Anxiety Crusher',
-    requiredTier: SubscriptionTier.MASTER,
-    duration: 15,
-    category: 'Life Mastery'
-  },
-  {
-    id: 'relationship-reality',
-    name: 'Relationship Reality Shift',
-    requiredTier: SubscriptionTier.MASTER,
-    duration: 20,
-    category: 'Life Mastery'
-  },
-  
-  // Daily Optimizer Tracks
-  {
-    id: 'morning-reality',
-    name: 'Morning Reality Field Activation',
-    requiredTier: SubscriptionTier.OPTIMIZER,
-    duration: 10,
-    category: 'Daily Power'
-  }
 ];
 
 // Define features with their access requirements
@@ -80,11 +53,11 @@ export const FEATURES: Feature[] = [
 class FeatureAccess {
   private userTier: SubscriptionTier = SubscriptionTier.FREE;
 
-  setUserTier(tier: SubscriptionTier) {
+  setSubscriptionTier(tier: SubscriptionTier) {
     this.userTier = tier;
   }
 
-  getUserTier(): SubscriptionTier {
+  getCurrentTier(): SubscriptionTier {
     return this.userTier;
   }
 
@@ -107,27 +80,17 @@ class FeatureAccess {
   hasAccessToTrack(trackId: string): boolean {
     const track = AUDIO_TRACKS.find(t => t.id === trackId);
     if (!track) return false;
-
-    // Free users can access preview tracks
-    if (this.userTier === SubscriptionTier.FREE && track.isPreview) {
-      return true;
-    }
-
-    const tierLevels = {
+    
+    const tierLevel = {
       [SubscriptionTier.FREE]: 0,
-      [SubscriptionTier.CORE]: 1,
-      [SubscriptionTier.MASTER]: 2,
-      [SubscriptionTier.OPTIMIZER]: 3
+      [SubscriptionTier.PREMIUM]: 1,
     };
-
-    return tierLevels[this.userTier] >= tierLevels[track.requiredTier];
+    
+    return tierLevel[this.userTier] >= tierLevel[track.requiredTier];
   }
 
-  // Get all available tracks for current user
   getAvailableTracks(): AudioTrackAccess[] {
-    return AUDIO_TRACKS.filter(track => 
-      this.hasAccessToTrack(track.id)
-    );
+    return AUDIO_TRACKS.filter(track => this.hasAccessToTrack(track.id));
   }
 
   // Get all available features for current user

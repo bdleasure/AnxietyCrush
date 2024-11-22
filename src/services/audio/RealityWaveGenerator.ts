@@ -1,183 +1,213 @@
 import { Audio } from 'expo-av';
+import { Asset } from 'expo-asset';
+import { SessionType } from '../../types/session';
+import { AudioTrackAccess } from '../subscription/types';
 
-export enum SessionType {
-  ANXIETY_CRUSHER = 'anxiety_crusher',
-  EMERGENCY_RESET = 'emergency_reset',
-  DEEP_PROGRAMMING = 'deep_programming'
-}
+// Define audio sources
+const AUDIO_SOURCES = {
+  anxietyCrusher: require('../../../assets/audio/11-Minute Anxiety Crusher.mp3'),
+  emergencyReset: require('../../../assets/audio/3-Minute Emergency Reset.mp3'),
+  deepProgramming: require('../../../assets/audio/30-Minute Deep Reality Programming.mp3'),
+} as const;
 
-interface AudioTrack {
+// Map track IDs to audio sources
+const TRACK_AUDIO_MAP: Record<string, number> = {
+  'anxiety-relief': AUDIO_SOURCES.anxietyCrusher,
+  'emergency-reset': AUDIO_SOURCES.emergencyReset,
+  'deep-reality': AUDIO_SOURCES.deepProgramming,
+};
+
+export interface AudioTrack {
   id: string;
   name: string;
   description: string;
-  duration: number; // in minutes
+  duration: number;
   type: SessionType;
-  file: any;
-  frequency?: number; // Alpha wave frequency in Hz
+  audioSource: number;
+  frequency?: number;
 }
 
 export const AVAILABLE_TRACKS: AudioTrack[] = [
   {
-    id: 'anxiety_crusher_1',
-    name: '11-Minute Anxiety Crusher™',
-    description: 'Transform anxiety with our primary Reality Wave™ session',
+    id: 'anxiety-relief',
+    name: 'Anxiety Crusher™',
+    description: 'Transform anxiety with our primary Reality Wave session',
     duration: 11,
     type: SessionType.ANXIETY_CRUSHER,
-    frequency: 10, // 10 Hz Alpha waves
-    file: require('../../../assets/audio/11-Minute Anxiety Crusher.mp3'),
+    frequency: 10,
+    audioSource: AUDIO_SOURCES.anxietyCrusher
   },
   {
-    id: 'emergency_reset_1',
-    name: '3-Minute Emergency Reset™',
+    id: 'emergency-reset',
+    name: 'Emergency Reset™',
     description: 'Quick anxiety relief for urgent situations',
     duration: 3,
     type: SessionType.EMERGENCY_RESET,
     frequency: 10,
-    file: require('../../../assets/audio/3-Minute Emergency Reset.mp3'),
+    audioSource: AUDIO_SOURCES.emergencyReset
   },
   {
-    id: 'deep_programming_1',
-    name: '30-Minute Deep Reality Programming™',
+    id: 'deep-reality',
+    name: 'Deep Reality Programming™',
     description: 'Extended session for deep anxiety transformation',
     duration: 30,
     type: SessionType.DEEP_PROGRAMMING,
     frequency: 10,
-    file: require('../../../assets/audio/30-Minute Deep Reality Programming.mp3'),
+    audioSource: AUDIO_SOURCES.deepProgramming
   }
 ];
 
 export class RealityWaveGenerator {
   private sound: Audio.Sound | null = null;
-  private isPlaying: boolean = false;
-  private volume: number = 0.5;
-  private currentTrack: AudioTrack | null = null;
-  private sessionStartTime: Date | null = null;
+  private onPlaybackStatusUpdateCallback: ((status: any) => void) | null = null;
+  private currentTrack: AudioTrackAccess | null = null;
 
   constructor() {
-    this.initializeAudio();
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      staysActiveInBackground: true,
+      playsInSilentModeIOS: true,
+      shouldDuckAndroid: true,
+      playThroughEarpieceAndroid: false,
+    });
   }
 
-  private async initializeAudio() {
+  private isSoundPlayable(sound: Audio.Sound | null): boolean {
+    return sound !== null && 
+           typeof sound.getStatusAsync === 'function' &&
+           typeof sound.unloadAsync === 'function';
+  }
+
+  private async cleanupSound() {
     try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: true,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
+      if (!this.isSoundPlayable(this.sound)) {
+        this.sound = null;
+        return;
+      }
+
+      try {
+        const status = await this.sound!.getStatusAsync();
+        if (status.isLoaded) {
+          await this.sound!.unloadAsync();
+        }
+      } catch (error) {
+        console.error('Error during sound cleanup:', error);
+      }
+      
+      this.sound = null;
     } catch (error) {
-      console.error('Failed to initialize audio:', error);
-      throw error;
+      console.error('Error in cleanupSound:', error);
+      this.sound = null;
     }
   }
 
-  async loadTrack(track: AudioTrack) {
+  async startRealityWave(track: AudioTrackAccess): Promise<void> {
     try {
-      if (this.sound) {
-        await this.sound.unloadAsync();
+      await this.cleanupSound();
+
+      const audioSource = TRACK_AUDIO_MAP[track.id];
+      if (!audioSource) {
+        throw new Error(`No audio source found for track: ${track.id}`);
       }
 
-      console.log('Loading track:', track.name);
-      const { sound } = await Audio.Sound.createAsync(track.file, {
-        shouldPlay: false,
-        volume: this.volume,
-        isLooping: false, // We'll handle session completion
-      });
+      const { sound } = await Audio.Sound.createAsync(
+        audioSource,
+        { shouldPlay: true },
+        this.handlePlaybackStatusUpdate
+      );
 
       this.sound = sound;
       this.currentTrack = track;
-      console.log('Successfully loaded track:', track.name);
     } catch (error) {
-      console.error('Failed to load track:', error);
-      this.sound = null;
+      console.error('Error starting reality wave:', error);
+      throw error;
+    }
+  }
+
+  private handlePlaybackStatusUpdate = (status: any) => {
+    if (this.onPlaybackStatusUpdateCallback) {
+      this.onPlaybackStatusUpdateCallback(status);
+    }
+  };
+
+  setOnPlaybackStatusUpdate(callback: ((status: any) => void) | null) {
+    this.onPlaybackStatusUpdateCallback = callback;
+  }
+
+  async stopRealityWave(): Promise<void> {
+    try {
+      await this.cleanupSound();
       this.currentTrack = null;
-      throw error;
-    }
-  }
-
-  async startRealityWave(track?: AudioTrack) {
-    try {
-      if (track && (!this.currentTrack || this.currentTrack.id !== track.id)) {
-        await this.loadTrack(track);
-      }
-
-      if (!this.sound || !this.currentTrack) {
-        throw new Error('No track loaded');
-      }
-
-      this.sessionStartTime = new Date();
-      await this.sound.playAsync();
-      this.isPlaying = true;
-
-      // Set up completion handler
-      this.sound.setOnPlaybackStatusUpdate(async (status: any) => {
-        if (status.didJustFinish) {
-          await this.handleSessionComplete();
-        }
-      });
-
-    } catch (error) {
-      console.error('Failed to start Reality Wave:', error);
-      throw error;
-    }
-  }
-
-  private async handleSessionComplete() {
-    if (this.currentTrack && this.sessionStartTime) {
-      const sessionEndTime = new Date();
-      const duration = (sessionEndTime.getTime() - this.sessionStartTime.getTime()) / 1000 / 60; // in minutes
       
-      // Here we'll add progress tracking later
-      console.log('Session completed:', {
-        trackName: this.currentTrack.name,
-        duration: duration,
-        type: this.currentTrack.type
-      });
-    }
-    
-    this.isPlaying = false;
-    this.sessionStartTime = null;
-  }
-
-  async stopRealityWave() {
-    try {
-      if (this.sound) {
-        await this.sound.stopAsync();
-        this.isPlaying = false;
-        this.sessionStartTime = null;
+      // Notify that playback has stopped
+      if (this.onPlaybackStatusUpdateCallback) {
+        this.onPlaybackStatusUpdateCallback({
+          isLoaded: false,
+          isPlaying: false,
+          positionMillis: 0,
+          durationMillis: 0,
+          didJustFinish: true
+        });
       }
     } catch (error) {
-      console.error('Failed to stop Reality Wave:', error);
-      throw error;
-    }
-  }
-
-  async setVolume(volume: number) {
-    try {
-      this.volume = Math.max(0, Math.min(1, volume));
-      if (this.sound) {
-        await this.sound.setVolumeAsync(this.volume);
+      console.error('Error stopping reality wave:', error);
+      // Even if there's an error, try to notify UI
+      if (this.onPlaybackStatusUpdateCallback) {
+        this.onPlaybackStatusUpdateCallback({
+          isLoaded: false,
+          isPlaying: false,
+          positionMillis: 0,
+          durationMillis: 0,
+          didJustFinish: true
+        });
       }
-    } catch (error) {
-      console.error('Failed to set volume:', error);
-      throw error;
     }
   }
 
-  getIsPlaying(): boolean {
-    return this.isPlaying;
-  }
-
-  getCurrentTrack(): AudioTrack | null {
-    return this.currentTrack;
-  }
-
-  getSessionProgress(): number {
-    if (!this.sessionStartTime || !this.currentTrack) {
+  async getCurrentPosition(): Promise<number> {
+    try {
+      if (!this.isSoundPlayable(this.sound)) return 0;
+      
+      const status = await this.sound!.getStatusAsync();
+      return status.isLoaded ? Math.floor(status.positionMillis / 1000) : 0;
+    } catch (error) {
+      console.error('Error getting position:', error);
       return 0;
     }
-    const elapsed = (new Date().getTime() - this.sessionStartTime.getTime()) / 1000 / 60; // in minutes
-    return Math.min(1, elapsed / this.currentTrack.duration);
+  }
+
+  async getDuration(): Promise<number> {
+    if (!this.currentTrack) return 0;
+    return this.currentTrack.duration * 60; // Convert minutes to seconds
+  }
+
+  async seekTo(position: number): Promise<void> {
+    try {
+      if (!this.currentTrack) return;
+
+      let wasPlaying = false;
+      if (this.isSoundPlayable(this.sound)) {
+        const status = await this.sound!.getStatusAsync();
+        wasPlaying = status.isLoaded && status.isPlaying;
+      }
+
+      await this.cleanupSound();
+
+      const audioSource = TRACK_AUDIO_MAP[this.currentTrack.id];
+      if (!audioSource) return;
+
+      const { sound } = await Audio.Sound.createAsync(
+        audioSource,
+        { 
+          shouldPlay: wasPlaying,
+          positionMillis: Math.floor(position * 1000)
+        },
+        this.handlePlaybackStatusUpdate
+      );
+
+      this.sound = sound;
+    } catch (error) {
+      console.error('Error seeking:', error);
+    }
   }
 }

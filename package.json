@@ -11,13 +11,16 @@
   },
   "dependencies": {
     "@expo/ngrok": "^4.1.0",
-    "@react-native-masked-view/masked-view": "0.3.2",
     "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-community/slider": "^4.5.5",
+    "@react-native-masked-view/masked-view": "0.3.2",
     "@react-navigation/bottom-tabs": "^6.5.11",
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/native-stack": "^6.9.17",
     "@reduxjs/toolkit": "^2.0.1",
+    "@xmldom/xmldom": "^0.8.10",
     "expo": "~52.0.0",
+    "expo-asset": "^11.0.1",
     "expo-av": "~15.0.1",
     "expo-background-fetch": "~13.0.3",
     "expo-blur": "~14.0.1",
@@ -28,6 +31,7 @@
     "expo-screen-orientation": "~8.0.0",
     "expo-secure-store": "~14.0.0",
     "expo-status-bar": "~2.0.0",
+    "lru-cache": "^10.1.0",
     "react": "18.3.1",
     "react-native": "0.76.2",
     "react-native-reanimated": "~3.16.1",
@@ -35,9 +39,7 @@
     "react-native-screens": "~4.1.0",
     "react-native-svg": "15.8.0",
     "react-redux": "^9.0.4",
-    "uuid": "^9.0.1",
-    "@xmldom/xmldom": "^0.8.10",
-    "lru-cache": "^10.1.0"
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.23.6",
