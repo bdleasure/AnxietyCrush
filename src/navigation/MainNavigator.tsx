@@ -8,6 +8,7 @@ import { SessionPlayer } from '../screens/SessionPlayer';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { ProgressScreen } from '../screens/ProgressScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { BonusVaultScreen } from '../screens/BonusVaultScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -19,6 +20,10 @@ const TAB_ICON = {
   Progress: {
     active: 'analytics',
     inactive: 'analytics-outline',
+  },
+  Bonus: {
+    active: 'gift',
+    inactive: 'gift-outline',
   },
   Profile: {
     active: 'person',
@@ -66,6 +71,19 @@ export const MainNavigator = () => {
             tabBarIcon: ({ focused, color, size }) => (
               <Ionicons 
                 name={focused ? TAB_ICON.Progress.active : TAB_ICON.Progress.inactive} 
+                size={size} 
+                color={color} 
+              />
+            ),
+          }}
+        />
+        <Tab.Screen 
+          name="Bonus" 
+          component={BonusVaultScreen}
+          options={{
+            tabBarIcon: ({ focused, color, size }) => (
+              <Ionicons 
+                name={focused ? TAB_ICON.Bonus.active : TAB_ICON.Bonus.inactive} 
                 size={size} 
                 color={color} 
               />
