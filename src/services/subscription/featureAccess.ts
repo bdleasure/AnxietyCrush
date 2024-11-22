@@ -10,7 +10,7 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
     subtitle: SESSION_SUBTITLES.ANXIETY_CRUSHER,
     duration: 11,
     requiredTier: SubscriptionTier.FREE,
-    category: 'Audio Wave'
+    category: 'Reality Waves'
   },
   {
     id: 'emergency-reset',
@@ -19,7 +19,7 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
     subtitle: SESSION_SUBTITLES.EMERGENCY_RESET,
     duration: 3,
     requiredTier: SubscriptionTier.FREE,
-    category: 'Audio Wave'
+    category: 'Reality Waves'
   },
   {
     id: 'deep-reality',
@@ -28,7 +28,7 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
     subtitle: SESSION_SUBTITLES.DEEP_REALITY,
     duration: 30,
     requiredTier: SubscriptionTier.PREMIUM,
-    category: 'Audio Wave'
+    category: 'Reality Waves'
   },
 ];
 
