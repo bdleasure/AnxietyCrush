@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -51,9 +51,15 @@ const BONUS_CONTENT: BonusContent[] = [
   },
 ];
 
-const BonusCard = ({ content }: { content: BonusContent }) => {
-  const isSelected = false; // We'll implement selection logic later
-
+const BonusCard = ({ 
+  content, 
+  isSelected, 
+  onSelect 
+}: { 
+  content: BonusContent; 
+  isSelected: boolean;
+  onSelect: () => void;
+}) => {
   return (
     <View style={styles.cardContainer}>
       {isSelected ? (
@@ -63,7 +69,7 @@ const BonusCard = ({ content }: { content: BonusContent }) => {
           end={{ x: 1, y: 1 }}
           style={styles.cardBorder}
         >
-          <TouchableOpacity style={styles.card}>
+          <TouchableOpacity style={styles.card} onPress={onSelect}>
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>{content.name}</Text>
               <Text style={styles.cardDescription}>{content.description}</Text>
@@ -73,11 +79,12 @@ const BonusCard = ({ content }: { content: BonusContent }) => {
               <Text style={styles.cardType}>
                 {content.type === 'audio' ? '🎧 Audio Session' : '📄 PDF Guide'}
               </Text>
+              <View style={styles.selectedDot} />
             </View>
           </TouchableOpacity>
         </LinearGradient>
       ) : (
-        <TouchableOpacity style={styles.card}>
+        <TouchableOpacity style={styles.card} onPress={onSelect}>
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle}>{content.name}</Text>
             <Text style={styles.cardDescription}>{content.description}</Text>
@@ -96,6 +103,7 @@ const BonusCard = ({ content }: { content: BonusContent }) => {
 
 export const BonusVaultScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -114,7 +122,12 @@ export const BonusVaultScreen: React.FC = () => {
       >
         <View style={styles.grid}>
           {BONUS_CONTENT.map((content) => (
-            <BonusCard key={content.id} content={content} />
+            <BonusCard 
+              key={content.id} 
+              content={content}
+              isSelected={content.id === selectedContentId}
+              onSelect={() => setSelectedContentId(content.id)}
+            />
           ))}
         </View>
       </ScrollView>
@@ -191,5 +204,14 @@ const styles = StyleSheet.create({
   cardType: {
     fontSize: 11,
     color: colors.textSecondary,
+  },
+  selectedDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFD700',
   },
 });
