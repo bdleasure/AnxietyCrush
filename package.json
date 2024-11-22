@@ -7,7 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "clean": "rimraf node_modules .expo package-lock.json && npm cache clean --force"
+    "clean": "npx rimraf node_modules .expo package-lock.json && npm cache clean --force"
   },
   "dependencies": {
     "@expo/ngrok": "^4.1.0",
