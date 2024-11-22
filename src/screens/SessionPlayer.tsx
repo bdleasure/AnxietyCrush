@@ -210,7 +210,7 @@ export const SessionPlayer: React.FC = () => {
           <View style={styles.sessionInfo}>
             <Text style={styles.sessionTitle}>
               {track.name}
-              {isLocked && ' 🔒'}
+              {isLocked && ' '}
             </Text>
             <Text style={styles.sessionSubtitle}>
               {track.subtitle}
@@ -246,7 +246,7 @@ export const SessionPlayer: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.heading}>Reality Wave</Text>
+        <Text style={styles.heading}>Transform Now</Text>
         <Text style={styles.subheading}>Select your session</Text>
       </View>
 
