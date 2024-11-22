@@ -202,10 +202,13 @@ export const SessionPlayer: React.FC = () => {
           <View style={styles.sessionInfo}>
             <Text style={styles.sessionTitle}>
               {track.name}
-              {isLocked && ' 🔒'}
+              {isLocked && ' '}
             </Text>
             <Text style={styles.sessionDescription}>
-              {isLocked ? `Unlock with ${track.requiredTier} Package` : `${track.duration} min • ${track.category}`}
+              {isLocked ? `Unlock with ${track.requiredTier} Package` : track.description}
+            </Text>
+            <Text style={styles.sessionDuration}>
+              {track.duration} min
             </Text>
           </View>
           {selectedTrack.id === track.id && !isLocked && (
@@ -232,7 +235,7 @@ export const SessionPlayer: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.heading}>Reality Wave™</Text>
+        <Text style={styles.heading}>Reality Wave</Text>
         <Text style={styles.subheading}>Select your session</Text>
       </View>
 

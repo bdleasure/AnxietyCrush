@@ -1,25 +1,26 @@
 import { SubscriptionTier, Feature, FeatureCategory, AudioTrackAccess } from './types';
+import { SESSION_DESCRIPTIONS } from '../../constants/strings';
 
 // Define available tracks with their access requirements
 export const AUDIO_TRACKS: AudioTrackAccess[] = [
   {
     id: 'anxiety-relief',
     name: 'Anxiety Crusher™',
-    description: 'Transform anxiety with our primary Reality Wave session',
+    description: SESSION_DESCRIPTIONS.ANXIETY_CRUSHER,
     duration: 11,
     requiredTier: SubscriptionTier.FREE,
   },
   {
     id: 'emergency-reset',
     name: 'Emergency Reset™',
-    description: 'Quick anxiety relief for urgent situations',
+    description: SESSION_DESCRIPTIONS.EMERGENCY_RESET,
     duration: 3,
     requiredTier: SubscriptionTier.FREE,
   },
   {
     id: 'deep-reality',
     name: 'Deep Reality Programming™',
-    description: 'Extended session for deep anxiety transformation',
+    description: SESSION_DESCRIPTIONS.DEEP_REALITY,
     duration: 30,
     requiredTier: SubscriptionTier.PREMIUM,
   },
