@@ -199,21 +199,38 @@ export const SessionPlayer: React.FC = () => {
 
     return (
       <View style={styles.sessionCardContainer}>
-        <LinearGradient
-          colors={['#FFD700', '#9400D3']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[
-            styles.sessionCardBorder,
-            isSelected && styles.selectedCardBorder
-          ]}
-        >
-          <View style={[styles.sessionCard, isLocked && styles.lockedCard]}>
-            <TouchableOpacity
-              onPress={() => selectSession(track)}
-              disabled={isPlaying}
-              style={styles.sessionCardContent}
-            >
+        {isSelected ? (
+          <LinearGradient
+            colors={['#FFD700', '#9400D3']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.sessionCardBorder}
+          >
+            <View style={[styles.sessionCard, isLocked && styles.lockedCard]}>
+              <TouchableOpacity
+                onPress={() => selectSession(track)}
+                disabled={isPlaying}
+                style={styles.sessionCardContent}
+              >
+                <View style={styles.sessionInfo}>
+                  <Text style={styles.sessionTitle}>{track.name}{isLocked && ' 🔒'}</Text>
+                  <Text style={styles.sessionSubtitle}>{track.subtitle}</Text>
+                  <Text style={styles.sessionDescription}>
+                    {isLocked ? `Unlock with ${track.requiredTier} Package` : track.description}
+                  </Text>
+                  <Text style={styles.sessionDuration}>{track.duration} min</Text>
+                </View>
+                <View style={styles.selectedIndicator} />
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        ) : (
+          <TouchableOpacity
+            style={[styles.sessionCard, isLocked && styles.lockedCard]}
+            onPress={() => selectSession(track)}
+            disabled={isPlaying}
+          >
+            <View style={styles.sessionCardContent}>
               <View style={styles.sessionInfo}>
                 <Text style={styles.sessionTitle}>{track.name}{isLocked && ' 🔒'}</Text>
                 <Text style={styles.sessionSubtitle}>{track.subtitle}</Text>
@@ -222,10 +239,9 @@ export const SessionPlayer: React.FC = () => {
                 </Text>
                 <Text style={styles.sessionDuration}>{track.duration} min</Text>
               </View>
-              {isSelected && !isLocked && <View style={styles.selectedIndicator} />}
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+            </View>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -351,11 +367,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   sessionCardBorder: {
-    padding: 1.5,
-    borderRadius: 16,
-  },
-  selectedCardBorder: {
     padding: 2.5,
+    borderRadius: 16,
   },
   sessionCard: {
     backgroundColor: colors.cardBackground,
