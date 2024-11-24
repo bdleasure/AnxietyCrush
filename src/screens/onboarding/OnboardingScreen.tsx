@@ -200,25 +200,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    paddingBottom: 100, // Add extra padding at bottom to account for navigation
   },
   textContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28, // Reduced from 32
     fontWeight: 'bold',
     color: colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 16, // Reduced from 20
     letterSpacing: 0.5,
   },
   description: {
-    fontSize: 18,
+    fontSize: 16, // Reduced from 18
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 28,
-    maxWidth: 300,
+    lineHeight: 24, // Reduced from 28
+    maxWidth: 320, // Increased from 300 to allow more horizontal space
     letterSpacing: 0.3,
   },
   footer: {
