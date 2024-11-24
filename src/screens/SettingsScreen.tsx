@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    padding: 20,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     flexDirection: 'row',
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.textPrimary,
   },
@@ -221,25 +221,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   section: {
-    padding: 20,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: colors.textPrimary,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
+    paddingRight: 8,
   },
   settingLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textPrimary,
+    flex: 1,
+    marginRight: 12,
   },
   qualitySelector: {
     flexDirection: 'row',
@@ -248,15 +251,15 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   qualityOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 6,
   },
   qualityOptionSelected: {
     backgroundColor: colors.primary,
   },
   qualityText: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
   },
   qualityTextSelected: {
@@ -265,28 +268,28 @@ const styles = StyleSheet.create({
   },
   timeButton: {
     backgroundColor: colors.cardBackground,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
   },
   timeText: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textPrimary,
   },
   themeButton: {
     backgroundColor: colors.cardBackground,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
   },
   themeText: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textPrimary,
   },
   versionText: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
     textAlign: 'center',
-    padding: 20,
+    padding: 16,
   },
 });
