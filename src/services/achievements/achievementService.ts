@@ -73,7 +73,7 @@ const ACHIEVEMENT_DEFINITIONS: { [key: string]: Omit<Achievement, 'currentProgre
     title: 'Time Traveler',
     description: 'Spend 1 hour in sessions',
     requiredProgress: 60,
-    icon: 'time',
+    icon: 'clock-outline',
     category: 'time',
   },
   [ACHIEVEMENTS.MINDFUL_MINUTES]: {
@@ -89,7 +89,7 @@ const ACHIEVEMENT_DEFINITIONS: { [key: string]: Omit<Achievement, 'currentProgre
     title: 'Hour Hero',
     description: 'Spend 10 hours in sessions',
     requiredProgress: 600,
-    icon: 'clock',
+    icon: 'clock-check-outline',
     category: 'time',
     reward: { type: 'sound', value: 'hero_sound' },
   },
@@ -128,7 +128,7 @@ const ACHIEVEMENT_DEFINITIONS: { [key: string]: Omit<Achievement, 'currentProgre
     title: 'Early Bird',
     description: 'Complete 5 sessions before 9 AM',
     requiredProgress: 5,
-    icon: 'sunrise',
+    icon: 'weather-sunny',
     category: 'special',
   },
   [ACHIEVEMENTS.NIGHT_OWL]: {
@@ -136,7 +136,7 @@ const ACHIEVEMENT_DEFINITIONS: { [key: string]: Omit<Achievement, 'currentProgre
     title: 'Night Owl',
     description: 'Complete 5 sessions after 9 PM',
     requiredProgress: 5,
-    icon: 'moon',
+    icon: 'weather-night',
     category: 'special',
   },
   [ACHIEVEMENTS.WEEKEND_WARRIOR]: {
