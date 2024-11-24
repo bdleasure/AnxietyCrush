@@ -1,42 +1,38 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserMetrics, SessionRecord } from './types';
 
-const STORAGE_KEYS = {
-  USER_METRICS: '@anxiety_crush/user_metrics',
-  SESSION_RECORDS: '@anxiety_crush/session_records',
-};
+const METRICS_KEY = '@anxiety_crush/user_metrics';
+const SESSIONS_KEY = '@anxiety_crush/session_records';
 
 const DEFAULT_METRICS: UserMetrics = {
   sessionsCompleted: 0,
   currentStreak: 0,
   realityScore: 0,
+  dailyProgress: [],
 };
 
 class MetricsService {
   async resetMetrics(): Promise<void> {
     try {
-      await Promise.all([
-        AsyncStorage.removeItem(STORAGE_KEYS.USER_METRICS),
-        AsyncStorage.removeItem(STORAGE_KEYS.SESSION_RECORDS),
-      ]);
+      await AsyncStorage.setItem(METRICS_KEY, JSON.stringify(DEFAULT_METRICS));
     } catch (error) {
       console.error('Error resetting metrics:', error);
     }
   }
 
-  private async getStoredMetrics(): Promise<UserMetrics> {
+  private async getMetrics(): Promise<UserMetrics> {
     try {
-      const metricsJson = await AsyncStorage.getItem(STORAGE_KEYS.USER_METRICS);
-      return metricsJson ? JSON.parse(metricsJson) : DEFAULT_METRICS;
+      const metricsStr = await AsyncStorage.getItem(METRICS_KEY);
+      return metricsStr ? JSON.parse(metricsStr) : DEFAULT_METRICS;
     } catch (error) {
-      console.error('Error getting stored metrics:', error);
+      console.error('Error getting metrics:', error);
       return DEFAULT_METRICS;
     }
   }
 
   private async getStoredSessions(): Promise<SessionRecord[]> {
     try {
-      const sessionsJson = await AsyncStorage.getItem(STORAGE_KEYS.SESSION_RECORDS);
+      const sessionsJson = await AsyncStorage.getItem(SESSIONS_KEY);
       return sessionsJson ? JSON.parse(sessionsJson) : [];
     } catch (error) {
       console.error('Error getting stored sessions:', error);
@@ -45,79 +41,61 @@ class MetricsService {
   }
 
   async getUserMetrics(): Promise<UserMetrics> {
-    return this.getStoredMetrics();
+    return this.getMetrics();
   }
 
-  async recordSession(session: Omit<SessionRecord, 'id' | 'date'>): Promise<void> {
+  async recordSession(session: SessionRecord): Promise<void> {
     try {
-      // Get existing sessions and metrics
-      const [sessions, metrics] = await Promise.all([
-        this.getStoredSessions(),
-        this.getStoredMetrics(),
-      ]);
+      const metrics = await this.getMetrics();
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Update basic metrics
+      metrics.sessionsCompleted += 1;
+      metrics.realityScore = Math.min(100, metrics.realityScore + 5);
+      metrics.lastSessionDate = today;
 
-      // Create new session record
-      const newSession: SessionRecord = {
-        ...session,
-        id: Date.now().toString(),
-        date: new Date().toISOString(),
-      };
-
-      // Update sessions list
-      const updatedSessions = [...sessions, newSession];
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.SESSION_RECORDS,
-        JSON.stringify(updatedSessions)
-      );
-
-      // Update metrics
-      if (session.completed) {
-        const updatedMetrics = this.calculateUpdatedMetrics(metrics, newSession);
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.USER_METRICS,
-          JSON.stringify(updatedMetrics)
-        );
+      // Update daily progress
+      if (!metrics.dailyProgress) {
+        metrics.dailyProgress = [];
       }
+
+      const todayProgress = metrics.dailyProgress.find(p => p.date === today);
+      if (todayProgress) {
+        todayProgress.sessionsCompleted += 1;
+        todayProgress.realityScore = metrics.realityScore;
+      } else {
+        metrics.dailyProgress.push({
+          date: today,
+          sessionsCompleted: 1,
+          realityScore: metrics.realityScore,
+        });
+      }
+
+      // Keep only last 7 days
+      metrics.dailyProgress = metrics.dailyProgress
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 7);
+
+      // Update streak
+      if (metrics.lastSessionDate) {
+        const lastDate = new Date(metrics.lastSessionDate);
+        const currentDate = new Date();
+        const diffTime = Math.abs(currentDate.getTime() - lastDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays <= 1) {
+          metrics.currentStreak += 1;
+        } else {
+          metrics.currentStreak = 1;
+        }
+      } else {
+        metrics.currentStreak = 1;
+      }
+
+      await AsyncStorage.setItem(METRICS_KEY, JSON.stringify(metrics));
     } catch (error) {
       console.error('Error recording session:', error);
     }
-  }
-
-  private calculateUpdatedMetrics(
-    currentMetrics: UserMetrics,
-    newSession: SessionRecord
-  ): UserMetrics {
-    const lastDate = currentMetrics.lastSessionDate
-      ? new Date(currentMetrics.lastSessionDate)
-      : null;
-    const sessionDate = new Date(newSession.date);
-    
-    // Calculate streak
-    let streak = currentMetrics.currentStreak;
-    if (lastDate) {
-      const dayDiff = Math.floor(
-        (sessionDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      if (dayDiff <= 1) {
-        streak += 1;
-      } else {
-        streak = 1;
-      }
-    } else {
-      streak = 1;
-    }
-
-    // Calculate reality score (based on streak and sessions completed)
-    const baseScore = Math.min(currentMetrics.sessionsCompleted * 5, 70);
-    const streakBonus = Math.min(streak * 3, 30);
-    const realityScore = Math.min(baseScore + streakBonus, 100);
-
-    return {
-      sessionsCompleted: currentMetrics.sessionsCompleted + 1,
-      currentStreak: streak,
-      realityScore,
-      lastSessionDate: sessionDate.toISOString(),
-    };
   }
 }
 

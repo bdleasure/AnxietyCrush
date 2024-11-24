@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions, Platform } from 'react-native';
 import { colors } from '../theme/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MetricCard } from '../components/MetricCard';
 import { metricsService } from '../services/metrics/metricsService';
 import { UserMetrics } from '../services/metrics/types';
 import { useNavigation } from '@react-navigation/native';
+import { LineChart } from 'react-native-chart-kit';
+import { BlurView } from 'expo-blur';
+
+const { width } = Dimensions.get('window');
 
 export const ProgressScreen = () => {
   const navigation = useNavigation();
@@ -13,6 +17,7 @@ export const ProgressScreen = () => {
     sessionsCompleted: 0,
     currentStreak: 0,
     realityScore: 0,
+    dailyProgress: [],
   });
 
   useEffect(() => {
@@ -26,6 +31,45 @@ export const ProgressScreen = () => {
     } catch (error) {
       console.error('Error loading metrics:', error);
     }
+  };
+
+  const getLast7Days = () => {
+    const dates = [];
+    const data = [];
+    const today = new Date();
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      dates.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
+      
+      const progress = metrics.dailyProgress?.find(p => p.date === dateStr);
+      data.push(progress?.realityScore || 0);
+    }
+    
+    return { dates, data };
+  };
+
+  const { dates, data } = getLast7Days();
+
+  const chartConfig = {
+    backgroundGradientFrom: colors.cardBackground,
+    backgroundGradientTo: colors.cardBackground,
+    color: (opacity = 1) => `rgba(255, 214, 10, ${opacity})`,
+    strokeWidth: 2,
+    barPercentage: 0.5,
+    useShadowColorFromDataset: false,
+    propsForDots: {
+      r: '6',
+      strokeWidth: '2',
+      stroke: colors.accent,
+    },
+    propsForBackgroundLines: {
+      strokeDasharray: '',
+      stroke: colors.border,
+      strokeOpacity: 0.2,
+    },
   };
 
   const handleResetMetrics = () => {
@@ -85,6 +129,34 @@ export const ProgressScreen = () => {
             label="Reality Level" 
           />
         </View>
+
+        <View style={styles.chartContainer}>
+          <Text style={styles.chartTitle}>Reality Level Progress</Text>
+          <LineChart
+            data={{
+              labels: dates,
+              datasets: [{
+                data,
+                color: (opacity = 1) => `rgba(255, 214, 10, ${opacity})`,
+                strokeWidth: 2,
+              }],
+            }}
+            width={width - 32}
+            height={220}
+            chartConfig={chartConfig}
+            bezier
+            style={styles.chart}
+            withInnerLines={true}
+            withOuterLines={true}
+            withVerticalLines={false}
+            withHorizontalLines={true}
+            withVerticalLabels={true}
+            withHorizontalLabels={true}
+            fromZero={true}
+            segments={5}
+          />
+        </View>
+
         <Text style={styles.subtitle}>Your Transformation Journey</Text>
         
         <TouchableOpacity 
@@ -105,29 +177,51 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.secondary,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    paddingBottom: 0,
   },
   title: {
-    fontSize: 17.6,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    letterSpacing: 0.5,
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: 16,
   },
   metricsContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 24,
-    height: 100,
   },
   metricSpacer: {
     width: 12,
+  },
+  chartContainer: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: 16,
+  },
+  chart: {
+    borderRadius: 16,
+    paddingRight: 16,
   },
   subtitle: {
     fontSize: 14.4,
