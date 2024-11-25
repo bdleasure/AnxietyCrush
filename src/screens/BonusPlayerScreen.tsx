@@ -187,6 +187,12 @@ export const BonusPlayerScreen: React.FC = () => {
     if (!selectedTrack) return;
 
     try {
+      // Check subscription status before allowing playback
+      if (isLocked(selectedTrack)) {
+        showUpgradeDialog(selectedTrack);
+        return;
+      }
+
       if (isPlaying) {
         await realityWaveGenerator.stopRealityWave();
         setIsPlaying(false);
@@ -233,6 +239,21 @@ export const BonusPlayerScreen: React.FC = () => {
       realityWaveGenerator.stopRealityWave();
     };
   }, [realityWaveGenerator]);
+
+  useEffect(() => {
+    // Stop playback and reset state when subscription status changes
+    const checkSubscriptionAndReset = async () => {
+      if (selectedTrack && isLocked(selectedTrack) && isPlaying) {
+        await realityWaveGenerator.stopRealityWave();
+        setIsPlaying(false);
+        setProgress(0);
+        setSessionTime(0);
+        showUpgradeDialog(selectedTrack);
+      }
+    };
+
+    checkSubscriptionAndReset();
+  }, [selectedTrack, isLocked, isPlaying, realityWaveGenerator, showUpgradeDialog]);
 
   const handleSeek = useCallback(async (position: number) => {
     try {
