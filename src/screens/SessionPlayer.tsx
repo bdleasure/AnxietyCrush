@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { AudioControls } from '../components/AudioControls';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { metricsService } from '../services/metrics/metricsService';
+import { useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -33,6 +34,7 @@ export const SessionPlayer: React.FC = () => {
   const [duration, setDuration] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
 
   // Get available tracks based on user's subscription
   const availableTracks = featureAccess.getAvailableTracks();
@@ -148,25 +150,19 @@ export const SessionPlayer: React.FC = () => {
   };
 
   // Show upgrade dialog
-  const showUpgradeDialog = (track: AudioTrackAccess) => {
+  const showUpgradeDialog = useCallback((track: AudioTrackAccess) => {
     Alert.alert(
-      'Upgrade Required',
-      `This ${track.name} is part of the ${track.requiredTier} package. Upgrade to access this and other premium features.`,
+      'Premium Content',
+      'This bonus session is only available to premium subscribers. Upgrade now to unlock all bonus content!',
       [
-        {
-          text: 'Maybe Later',
-          style: 'cancel',
-        },
-        {
-          text: 'Learn More',
-          onPress: () => {
-            // Navigate to upgrade screen
-            // navigation.navigate('Upgrade');
-          },
-        },
+        { text: 'Not Now', style: 'cancel' },
+        { 
+          text: 'Upgrade',
+          onPress: () => navigation.navigate('Subscription')
+        }
       ]
     );
-  };
+  }, [navigation]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -213,7 +209,7 @@ export const SessionPlayer: React.FC = () => {
                 style={styles.sessionCardContent}
               >
                 <View style={styles.sessionInfo}>
-                  <Text style={styles.sessionTitle}>{track.name}{isLocked && ' 🔒'}</Text>
+                  <Text style={styles.sessionTitle}>{track.name}{isLocked && ' '}</Text>
                   <Text style={styles.sessionSubtitle}>{track.subtitle}</Text>
                   <Text style={styles.sessionDescription}>
                     {isLocked ? `Unlock with ${track.requiredTier} Package` : track.description}
@@ -232,7 +228,7 @@ export const SessionPlayer: React.FC = () => {
           >
             <View style={styles.sessionCardContent}>
               <View style={styles.sessionInfo}>
-                <Text style={styles.sessionTitle}>{track.name}{isLocked && ' 🔒'}</Text>
+                <Text style={styles.sessionTitle}>{track.name}{isLocked && ' '}</Text>
                 <Text style={styles.sessionSubtitle}>{track.subtitle}</Text>
                 <Text style={styles.sessionDescription}>
                   {isLocked ? `Unlock with ${track.requiredTier} Package` : track.description}
@@ -283,10 +279,7 @@ export const SessionPlayer: React.FC = () => {
 
       {/* Audio Controls */}
       {selectedTrack && (
-        <View style={[
-          styles.audioControlsContainer,
-          { paddingBottom: insets.bottom + 60 }
-        ]}>
+        <View style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
           <AudioControls 
             audioPlayer={realityWave}
             isPlaying={isPlaying}
