@@ -274,18 +274,17 @@ export const SessionPlayer: React.FC = () => {
         ))}
       </ScrollView>
 
-      <BlurView intensity={100} tint="dark" style={styles.audioControlsContainer}>
+      <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
         <AudioControls
-          loading={loading}
+          audioPlayer={realityWaveGenerator}
+          isPlaying={isPlaying}
           onPlayPause={handlePlayPause}
           onSeek={handleSeek}
           onSeeking={handleSeeking}
           progress={progress}
           position={sessionTime}
           duration={duration}
-          isPlaying={isPlaying}
-          disabled={!selectedTrack || loading}
-          audioPlayer={realityWaveGenerator}
+          loading={loading}
         />
       </BlurView>
     </SafeAreaView>
@@ -380,7 +379,7 @@ const styles = StyleSheet.create({
   },
   audioControlsContainer: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 85 : 60, // Positioned above the tab bar
+    bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: colors.background,
