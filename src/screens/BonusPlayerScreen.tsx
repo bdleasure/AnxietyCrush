@@ -123,7 +123,7 @@ export const BonusPlayerScreen: React.FC = () => {
     try {
       if (isPlaying) {
         setIsPlaying(false);
-        await realityWaveGenerator.stopRealityWave();
+        await realityWaveGenerator.pauseRealityWave();
       }
       setSelectedTrack(track);
       setSessionTime(0);
@@ -139,7 +139,7 @@ export const BonusPlayerScreen: React.FC = () => {
     const checkSubscriptionAndReset = async () => {
       const locked = !featureAccess.hasAccessToTrack(selectedTrack.id);
       if (locked && isPlaying) {
-        await handleStop();
+        await handlePause();
         showUpgradeDialog(selectedTrack);
       }
     };
@@ -148,42 +148,27 @@ export const BonusPlayerScreen: React.FC = () => {
   }, [selectedTrack, isLocked, isPlaying, realityWaveGenerator, showUpgradeDialog]);
 
   const handlePlayPause = async () => {
-    if (!selectedTrack) return;
-
     try {
-      setLoading(true);
-      if (!isPlaying) {
-        const locked = !featureAccess.hasAccessToTrack(selectedTrack.id);
-        if (locked) {
-          showUpgradeDialog(selectedTrack);
-          return;
-        }
-
-        await realityWaveGenerator.startRealityWave(selectedTrack);
-        setIsPlaying(true);
-        metricsService.trackBonusSessionStart(selectedTrack.id);
-      } else {
-        await realityWaveGenerator.stopRealityWave();
+      if (isPlaying) {
+        await realityWaveGenerator.pauseRealityWave();
         setIsPlaying(false);
+      } else {
+        if (realityWaveGenerator) {
+          await realityWaveGenerator.startRealityWave(selectedTrack, true);
+          setIsPlaying(true);
+        }
       }
     } catch (error) {
-      console.error('Error toggling playback:', error);
-      Alert.alert('Playback Error', 'There was an error playing this track. Please try again.');
-      setIsPlaying(false);
-    } finally {
-      setLoading(false);
+      console.error('Error handling play/pause:', error);
     }
   };
 
-  const handleStop = async () => {
+  const handlePause = async () => {
     try {
-      await realityWaveGenerator.stopRealityWave();
+      await realityWaveGenerator.pauseRealityWave();
       setIsPlaying(false);
-      setSessionTime(0);
-      setProgress(0);
-      setDuration(0);
     } catch (error) {
-      console.error('Error stopping playback:', error);
+      console.error('Error pausing playback:', error);
     }
   };
 
@@ -197,7 +182,7 @@ export const BonusPlayerScreen: React.FC = () => {
     try {
       if (isPlaying) {
         setIsPlaying(false);
-        await realityWaveGenerator.stopRealityWave();
+        await realityWaveGenerator.pauseRealityWave();
       }
       setSelectedTrack(track);
       setSessionTime(0);
@@ -218,7 +203,7 @@ export const BonusPlayerScreen: React.FC = () => {
   useEffect(() => {
     return () => {
       if (isPlaying) {
-        realityWaveGenerator.stopRealityWave();
+        realityWaveGenerator.pauseRealityWave();
       }
     };
   }, [isPlaying, realityWaveGenerator]);
@@ -334,47 +319,47 @@ export const BonusPlayerScreen: React.FC = () => {
       {/* Audio Controls */}
       <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
         <AudioControls
+          audioPlayer={realityWaveGenerator}
+          isPlaying={isPlaying}
           onPlayPause={handlePlayPause}
           onSeek={handleSeek}
           onSeeking={handleSeeking}
           progress={progress}
           position={sessionTime}
           duration={duration}
-          isPlaying={isPlaying}
-          disabled={!selectedTrack || loading}
-          audioPlayer={realityWaveGenerator}
+          loading={loading}
         />
       </BlurView>
 
+      {/* Expanded Player */}
       {isPlaying && (
-        <BlurView intensity={100} tint="dark" style={styles.playerContainer}>
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+        <BlurView
+          intensity={100}
+          style={[styles.expandedPlayer, { paddingBottom: insets.bottom + 60 }]}
+        >
+          <View style={styles.expandedContent}>
+            <Text style={styles.trackTitle} numberOfLines={1}>
+              {selectedTrack?.title || 'No track selected'}
+            </Text>
+            <Text style={styles.timeText}>
+              {formatTime(sessionTime)} / {formatTime(duration)}
+            </Text>
           </View>
-
-          <View style={styles.controlsContainer}>
-            <View style={styles.timerContainer}>
-              <Text style={styles.timerText}>{formatTime(sessionTime)}</Text>
-              <Text style={styles.sessionName} numberOfLines={1}>
-                {selectedTrack?.name}
+          
+          <TouchableOpacity
+            style={[styles.button, isPlaying && styles.buttonActive]}
+            onPress={handlePlayPause}
+            disabled={loading}
+            activeOpacity={0.7}
+          >
+            {loading ? (
+              <ActivityIndicator color={colors.textPrimary} />
+            ) : (
+              <Text style={[styles.buttonText, isPlaying && styles.buttonTextActive]}>
+                {isPlaying ? 'Pause' : 'Play'}
               </Text>
-            </View>
-            
-            <TouchableOpacity
-              style={[styles.button, isPlaying && styles.buttonActive]}
-              onPress={handlePlayPause}
-              disabled={loading}
-              activeOpacity={0.7}
-            >
-              {loading ? (
-                <ActivityIndicator color={colors.textPrimary} />
-              ) : (
-                <Text style={styles.buttonText}>
-                  {isPlaying ? 'Stop' : 'Start'}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
+            )}
+          </TouchableOpacity>
         </BlurView>
       )}
     </SafeAreaView>
@@ -539,5 +524,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   lockedCard: {
+  },
+  expandedPlayer: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 85 : 60,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.cardBackground + '80',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    overflow: 'hidden',
+  },
+  expandedContent: {
+    padding: 20,
+    paddingBottom: 20,
+  },
+  trackTitle: {
+    fontSize: 16,
+    color: colors.textPrimary,
+    fontWeight: 'bold',
+  },
+  timeText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
 });

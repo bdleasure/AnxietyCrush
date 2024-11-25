@@ -29,7 +29,7 @@ export const SessionPlayer: React.FC = () => {
   const [sessionTime, setSessionTime] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<AudioTrackAccess>(AUDIO_TRACKS[0]);
-  const [realityWave] = useState(() => new RealityWaveGenerator());
+  const [realityWaveGenerator] = useState(() => new RealityWaveGenerator());
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(AUDIO_TRACKS[0].duration * 60); // Convert minutes to seconds
   const [isSeeking, setIsSeeking] = useState(false);
@@ -53,7 +53,7 @@ export const SessionPlayer: React.FC = () => {
     if (isPlaying && !isSeeking) {
       interval = setInterval(async () => {
         try {
-          const currentPosition = await realityWave.getCurrentPosition();
+          const currentPosition = await realityWaveGenerator.getCurrentPosition();
           if (currentPosition >= 0) {
             setSessionTime(currentPosition);
             setProgress(currentPosition / duration);
@@ -68,7 +68,7 @@ export const SessionPlayer: React.FC = () => {
         clearInterval(interval);
       }
     };
-  }, [isPlaying, isSeeking, realityWave, duration]);
+  }, [isPlaying, isSeeking, realityWaveGenerator, duration]);
 
   // Initialize duration when track changes
   useEffect(() => {
@@ -100,40 +100,28 @@ export const SessionPlayer: React.FC = () => {
   }, [selectedTrack, duration]);
 
   useEffect(() => {
-    realityWave.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
+    realityWaveGenerator.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
     return () => {
-      realityWave.setOnPlaybackStatusUpdate(null);
+      realityWaveGenerator.setOnPlaybackStatusUpdate(null);
     };
-  }, [realityWave, handlePlaybackStatusUpdate]);
+  }, [realityWaveGenerator, handlePlaybackStatusUpdate]);
 
   // Handle play/pause
-  const togglePlayPause = useCallback(async () => {
-    if (!featureAccess.hasAccessToTrack(selectedTrack.id)) {
-      showUpgradeDialog(selectedTrack);
-      return;
-    }
-
+  const handlePlayPause = async () => {
     try {
-      setLoading(true);
-      if (!isPlaying) {
-        await realityWave.startRealityWave(selectedTrack);
-        setIsPlaying(true);
-      } else {
-        await realityWave.stopRealityWave();
+      if (isPlaying) {
+        await realityWaveGenerator?.pauseRealityWave();
         setIsPlaying(false);
+      } else {
+        if (realityWaveGenerator) {
+          await realityWaveGenerator.startRealityWave(selectedTrack, true);
+          setIsPlaying(true);
+        }
       }
     } catch (error) {
-      console.error('Error toggling session:', error);
-      Alert.alert(
-        'Session Error',
-        'There was an error with the session. Please try again.',
-        [{ text: 'OK' }]
-      );
-      setIsPlaying(false);
-    } finally {
-      setLoading(false);
+      console.error('Error handling play/pause:', error);
     }
-  }, [isPlaying, realityWave, selectedTrack]);
+  };
 
   // Handle session selection
   const selectSession = async (track: AudioTrackAccess) => {
@@ -144,8 +132,8 @@ export const SessionPlayer: React.FC = () => {
 
     try {
       if (isPlaying) {
+        await realityWaveGenerator?.pauseRealityWave();
         setIsPlaying(false);
-        await realityWave.stopRealityWave();
       }
       setSelectedTrack(track);
       setSessionTime(0);
@@ -174,7 +162,7 @@ export const SessionPlayer: React.FC = () => {
   const handleSeek = useCallback(async (position: number) => {
     try {
       setIsSeeking(true);
-      await realityWave.seekTo(position);
+      await realityWaveGenerator.seekTo(position);
       setSessionTime(position);
       setProgress(position / duration);
     } catch (error) {
@@ -182,7 +170,7 @@ export const SessionPlayer: React.FC = () => {
     } finally {
       setIsSeeking(false);
     }
-  }, [realityWave, duration]);
+  }, [realityWaveGenerator, duration]);
 
   const handleSeeking = useCallback((value: number) => {
     setSessionTime(value);
@@ -192,9 +180,11 @@ export const SessionPlayer: React.FC = () => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      realityWave.stopRealityWave();
+      if (isPlaying) {
+        realityWaveGenerator?.pauseRealityWave();
+      }
     };
-  }, [realityWave]);
+  }, [isPlaying, realityWaveGenerator]);
 
   const SessionCard = ({ track }: { track: AudioTrackAccess }) => {
     const isLocked = !featureAccess.hasAccessToTrack(track.id);
@@ -287,7 +277,7 @@ export const SessionPlayer: React.FC = () => {
       {/* Audio Controls */}
       <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
         <AudioControls
-          onPlayPause={togglePlayPause}
+          onPlayPause={handlePlayPause}
           onSeek={handleSeek}
           onSeeking={handleSeeking}
           progress={progress}
@@ -295,7 +285,7 @@ export const SessionPlayer: React.FC = () => {
           duration={duration}
           isPlaying={isPlaying}
           disabled={!selectedTrack || loading}
-          audioPlayer={realityWave}
+          audioPlayer={realityWaveGenerator}
         />
       </BlurView>
 
@@ -315,7 +305,7 @@ export const SessionPlayer: React.FC = () => {
             
             <TouchableOpacity
               style={[styles.button, isPlaying && styles.buttonActive]}
-              onPress={togglePlayPause}
+              onPress={handlePlayPause}
               disabled={loading}
               activeOpacity={0.7}
             >
@@ -323,7 +313,7 @@ export const SessionPlayer: React.FC = () => {
                 <ActivityIndicator color={colors.textPrimary} />
               ) : (
                 <Text style={styles.buttonText}>
-                  {isPlaying ? 'Stop' : 'Start'}
+                  {isPlaying ? 'Pause' : 'Play'}
                 </Text>
               )}
             </TouchableOpacity>

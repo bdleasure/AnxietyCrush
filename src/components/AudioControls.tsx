@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { colors } from '../theme/colors';
 import { RealityWaveGenerator } from '../services/audio/RealityWaveGenerator';
@@ -12,6 +12,7 @@ interface AudioControlsProps {
   onPlayPause: () => void;
   onSeek: (position: number) => void;
   onSeeking?: (position: number) => void;
+  loading?: boolean;
 }
 
 export const AudioControls: React.FC<AudioControlsProps> = ({
@@ -22,6 +23,7 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
   onPlayPause,
   onSeek,
   onSeeking,
+  loading,
 }) => {
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -52,10 +54,16 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
         <TouchableOpacity
           style={[styles.button, isPlaying && styles.buttonActive]}
           onPress={onPlayPause}
+          disabled={loading}
+          activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>
-            {isPlaying ? 'Stop' : 'Play'}
-          </Text>
+          {loading ? (
+            <ActivityIndicator color={colors.textPrimary} />
+          ) : (
+            <Text style={[styles.buttonText, isPlaying && styles.buttonTextActive]}>
+              {isPlaying ? 'Pause' : 'Play'}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -101,5 +109,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  buttonTextActive: {
+    color: colors.textPrimary,
   },
 });
