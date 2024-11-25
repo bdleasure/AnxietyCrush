@@ -124,84 +124,60 @@ export const BonusPlayerScreen: React.FC = () => {
     };
   }, [realityWaveGenerator, handlePlaybackStatusUpdate]);
 
-  const handleTrackPress = useCallback(async (track: AudioTrackAccess) => {
-    const locked = !featureAccess.hasAccessToTrack(track.id);
-    if (locked) {
+  // Handle track selection
+  const handleTrackPress = async (track: AudioTrackAccess) => {
+    if (isLocked(track) || loading) {
       showUpgradeDialog(track);
       return;
     }
 
     try {
+      setLoading(true);
+      
+      // If a track is currently playing, stop it
       if (isPlaying) {
+        await realityWaveGenerator.stopRealityWave();
         setIsPlaying(false);
-        await realityWaveGenerator.pauseRealityWave();
       }
+
+      // Set the new track
       setSelectedTrack(track);
       setSessionTime(0);
       setProgress(0);
-      // Initialize duration with track metadata
-      setDuration(track.duration * 60); // Convert minutes to seconds
+      setDuration(track.duration * 60);
+      setLoading(false);
     } catch (error) {
-      console.error('Error selecting track:', error);
+      console.error('Error changing track:', error);
+      setLoading(false);
     }
-  }, [isPlaying, realityWaveGenerator, showUpgradeDialog]);
+  };
+
+  // Handle play/pause
+  const handlePlayPause = async () => {
+    try {
+      if (!isPlaying) {
+        await realityWaveGenerator.startRealityWave(selectedTrack, false);
+        setIsPlaying(true);
+      } else {
+        await realityWaveGenerator.pauseRealityWave();
+        setIsPlaying(false);
+      }
+    } catch (error) {
+      console.error('Error playing/pausing audio:', error);
+    }
+  };
 
   useEffect(() => {
     const checkSubscriptionAndReset = async () => {
       const locked = !featureAccess.hasAccessToTrack(selectedTrack.id);
       if (locked && isPlaying) {
-        await handlePause();
+        await handlePlayPause();
         showUpgradeDialog(selectedTrack);
       }
     };
 
     checkSubscriptionAndReset();
   }, [selectedTrack, isLocked, isPlaying, realityWaveGenerator, showUpgradeDialog]);
-
-  const handlePlayPause = async () => {
-    try {
-      if (isPlaying) {
-        await realityWaveGenerator.pauseRealityWave();
-        setIsPlaying(false);
-      } else {
-        if (realityWaveGenerator) {
-          await realityWaveGenerator.startRealityWave(selectedTrack, true);
-          setIsPlaying(true);
-        }
-      }
-    } catch (error) {
-      console.error('Error handling play/pause:', error);
-    }
-  };
-
-  const handlePause = async () => {
-    try {
-      await realityWaveGenerator.pauseRealityWave();
-      setIsPlaying(false);
-    } catch (error) {
-      console.error('Error pausing playback:', error);
-    }
-  };
-
-  // Handle session selection
-  const selectSession = async (track: AudioTrackAccess) => {
-    if (!featureAccess.hasAccessToTrack(track.id)) {
-      showUpgradeDialog(track);
-      return;
-    }
-
-    try {
-      if (isPlaying) {
-        setIsPlaying(false);
-        await realityWaveGenerator.pauseRealityWave();
-      }
-      setSelectedTrack(track);
-      setSessionTime(0);
-      setProgress(0);
-    } catch (error) {
-      console.error('Error selecting bonus session:', error);
-    }
-  };
 
   // Initialize duration when track changes
   useEffect(() => {
@@ -244,16 +220,7 @@ export const BonusPlayerScreen: React.FC = () => {
     return (
       <Card key={track.id} style={styles.trackCard} isSelected={isSelected}>
         <TouchableOpacity
-          onPress={() => {
-            if (!isLocked(track)) {
-              setSelectedTrack(track);
-              setSessionTime(0);
-              setProgress(0);
-              setDuration(track.duration * 60);
-            } else {
-              showUpgradeDialog(track);
-            }
-          }}
+          onPress={() => handleTrackPress(track)}
           style={styles.trackButton}
           disabled={loading}
         >

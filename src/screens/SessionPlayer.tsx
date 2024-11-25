@@ -117,40 +117,46 @@ export const SessionPlayer: React.FC = () => {
     };
   }, [realityWaveGenerator, handlePlaybackStatusUpdate]);
 
-  // Handle play/pause
-  const handlePlayPause = async () => {
-    try {
-      if (isPlaying) {
-        await realityWaveGenerator?.pauseRealityWave();
-        setIsPlaying(false);
-      } else {
-        if (realityWaveGenerator) {
-          await realityWaveGenerator.startRealityWave(selectedTrack, true);
-          setIsPlaying(true);
-        }
-      }
-    } catch (error) {
-      console.error('Error handling play/pause:', error);
-    }
-  };
-
-  // Handle session selection
-  const selectSession = async (track: AudioTrackAccess) => {
-    if (!featureAccess.hasAccessToTrack(track.id)) {
-      showUpgradeDialog(track);
+  // Handle track selection
+  const handleTrackPress = async (track: AudioTrackAccess) => {
+    if (isLocked(track) || loading) {
+      navigation.navigate('Upgrade');
       return;
     }
 
     try {
+      setLoading(true);
+      
+      // If a track is currently playing, stop it
       if (isPlaying) {
-        await realityWaveGenerator?.pauseRealityWave();
+        await realityWaveGenerator.stopRealityWave();
         setIsPlaying(false);
       }
+
+      // Set the new track
       setSelectedTrack(track);
       setSessionTime(0);
       setProgress(0);
+      setDuration(track.duration * 60);
+      setLoading(false);
     } catch (error) {
-      console.error('Error selecting session:', error);
+      console.error('Error changing track:', error);
+      setLoading(false);
+    }
+  };
+
+  // Handle play/pause
+  const handlePlayPause = async () => {
+    try {
+      if (!isPlaying) {
+        await realityWaveGenerator.startRealityWave(selectedTrack, false);
+        setIsPlaying(true);
+      } else {
+        await realityWaveGenerator.pauseRealityWave();
+        setIsPlaying(false);
+      }
+    } catch (error) {
+      console.error('Error playing/pausing audio:', error);
     }
   };
 
@@ -196,10 +202,6 @@ export const SessionPlayer: React.FC = () => {
       }
     };
   }, [isPlaying, realityWaveGenerator]);
-
-  const handleTrackPress = (track: AudioTrackAccess) => {
-    selectSession(track);
-  };
 
   const isLocked = (track: AudioTrackAccess) => {
     return !featureAccess.hasAccessToTrack(track.id);
