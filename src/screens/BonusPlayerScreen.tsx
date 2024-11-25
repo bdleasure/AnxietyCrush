@@ -330,38 +330,6 @@ export const BonusPlayerScreen: React.FC = () => {
           loading={loading}
         />
       </BlurView>
-
-      {/* Expanded Player */}
-      {isPlaying && (
-        <BlurView
-          intensity={100}
-          style={[styles.expandedPlayer, { paddingBottom: insets.bottom + 60 }]}
-        >
-          <View style={styles.expandedContent}>
-            <Text style={styles.trackTitle} numberOfLines={1}>
-              {selectedTrack?.title || 'No track selected'}
-            </Text>
-            <Text style={styles.timeText}>
-              {formatTime(sessionTime)} / {formatTime(duration)}
-            </Text>
-          </View>
-          
-          <TouchableOpacity
-            style={[styles.button, isPlaying && styles.buttonActive]}
-            onPress={handlePlayPause}
-            disabled={loading}
-            activeOpacity={0.7}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.textPrimary} />
-            ) : (
-              <Text style={[styles.buttonText, isPlaying && styles.buttonTextActive]}>
-                {isPlaying ? 'Pause' : 'Play'}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </BlurView>
-      )}
     </SafeAreaView>
   );
 };
@@ -393,62 +361,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: Platform.OS === 'ios' ? 180 : 160,
-  },
-  playerContainer: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 85 : 60,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.cardBackground + '80',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    overflow: 'hidden',
-  },
-  progressContainer: {
-    height: 3,
-    backgroundColor: colors.secondary + '40',
-    width: '100%',
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: colors.accent,
-  },
-  controlsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    paddingBottom: 20,
-  },
-  timerContainer: {
-    flex: 1,
-    marginRight: 20,
-  },
-  timerText: {
-    fontSize: 19,
-    color: colors.textPrimary,
-    fontWeight: 'bold',
-  },
-  sessionName: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
-  button: {
-    backgroundColor: colors.accent,
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 25,
-    minWidth: 120,
-    alignItems: 'center',
-  },
-  buttonActive: {
-    backgroundColor: colors.error,
-  },
-  buttonText: {
-    fontSize: 13,
-    color: colors.textPrimary,
-    marginLeft: 8,
   },
   audioControlsContainer: {
     position: 'absolute',
@@ -524,29 +436,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   lockedCard: {
-  },
-  expandedPlayer: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 85 : 60,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.cardBackground + '80',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    overflow: 'hidden',
-  },
-  expandedContent: {
-    padding: 20,
-    paddingBottom: 20,
-  },
-  trackTitle: {
-    fontSize: 16,
-    color: colors.textPrimary,
-    fontWeight: 'bold',
-  },
-  timeText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
 });

@@ -274,9 +274,9 @@ export const SessionPlayer: React.FC = () => {
         ))}
       </ScrollView>
 
-      {/* Audio Controls */}
-      <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
+      <BlurView intensity={100} tint="dark" style={styles.audioControlsContainer}>
         <AudioControls
+          loading={loading}
           onPlayPause={handlePlayPause}
           onSeek={handleSeek}
           onSeeking={handleSeeking}
@@ -288,38 +288,6 @@ export const SessionPlayer: React.FC = () => {
           audioPlayer={realityWaveGenerator}
         />
       </BlurView>
-
-      {isPlaying && (
-        <BlurView intensity={100} tint="dark" style={styles.playerContainer}>
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
-          </View>
-
-          <View style={styles.controlsContainer}>
-            <View style={styles.timerContainer}>
-              <Text style={styles.timerText}>{formatTime(sessionTime)}</Text>
-              <Text style={styles.sessionName} numberOfLines={1}>
-                {selectedTrack.name}
-              </Text>
-            </View>
-            
-            <TouchableOpacity
-              style={[styles.button, isPlaying && styles.buttonActive]}
-              onPress={handlePlayPause}
-              disabled={loading}
-              activeOpacity={0.7}
-            >
-              {loading ? (
-                <ActivityIndicator color={colors.textPrimary} />
-              ) : (
-                <Text style={styles.buttonText}>
-                  {isPlaying ? 'Pause' : 'Play'}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </BlurView>
-      )}
     </SafeAreaView>
   );
 };
@@ -410,61 +378,14 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontWeight: '500',
   },
-  playerContainer: {
+  audioControlsContainer: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 85 : 60, // Height of the tab bar
+    bottom: Platform.OS === 'ios' ? 85 : 60, // Positioned above the tab bar
     left: 0,
     right: 0,
-    backgroundColor: colors.cardBackground + '80',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    overflow: 'hidden',
-  },
-  progressContainer: {
-    height: 3,
-    backgroundColor: colors.secondary + '40',
-    width: '100%',
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: colors.accent,
-  },
-  controlsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    paddingBottom: 20, // Reduced padding since we moved up the container
-  },
-  timerContainer: {
-    flex: 1,
-    marginRight: 20,
-  },
-  timerText: {
-    fontSize: 19,
-    color: colors.textPrimary,
-    fontWeight: 'bold',
-  },
-  sessionName: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
-  button: {
-    backgroundColor: colors.accent,
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 25,
-    minWidth: 120,
-    alignItems: 'center',
-  },
-  buttonActive: {
-    backgroundColor: colors.error,
-  },
-  buttonText: {
-    fontSize: 13,
-    color: colors.textPrimary,
-    marginLeft: 8,
+    backgroundColor: colors.background,
+    paddingTop: 16,
+    zIndex: 2,
   },
   categoryHeader: {
     fontSize: 14,
@@ -476,14 +397,5 @@ const styles = StyleSheet.create({
   lockedCard: {
     opacity: 0.8,
     borderColor: colors.secondary,
-  },
-  audioControlsContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.background,
-    paddingTop: 16,
-    zIndex: 2,
   },
 });
