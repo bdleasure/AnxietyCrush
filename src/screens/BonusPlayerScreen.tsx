@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
-  Text,
   TouchableOpacity,
   Alert,
   ScrollView,
@@ -12,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { RealityWaveGenerator } from '../services/audio/RealityWaveGenerator';
-import { colors } from '../theme/colors';
+import { theme } from '../theme';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AudioControls } from '../components/AudioControls';
@@ -22,6 +21,9 @@ import { featureAccess } from '../services/subscription/featureAccess';
 import { metricsService } from '../services/metrics/metricsService';
 import { useNavigation } from '@react-navigation/native';
 import { BONUS_TRACKS } from '../constants/tracks';
+import { Card } from '../components/shared/Card';
+import { H1, H2, H3, BodyMedium, BodySmall, Label } from '../components/shared/Typography';
+import { Button } from '../components/shared/Button';
 
 const { width, height } = Dimensions.get('window');
 
@@ -231,80 +233,43 @@ export const BonusPlayerScreen: React.FC = () => {
     const isSelected = selectedTrack?.id === track.id;
     
     return (
-      <View style={styles.sessionCardContainer}>
-        {isSelected ? (
-          <LinearGradient
-            colors={['#FFD700', '#9400D3']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.sessionCardBorder}
-          >
-            <View style={[styles.sessionCard, locked && styles.lockedCard]}>
-              <TouchableOpacity
-                onPress={() => handleTrackPress(track)}
-                disabled={isPlaying}
-                style={styles.sessionCardContent}
-              >
-                <View style={styles.sessionInfo}>
-                  <Text style={styles.sessionTitle}>{track.name}</Text>
-                  <Text style={styles.sessionSubtitle}>{track.subtitle}</Text>
-                  <Text style={styles.sessionDescription}>
-                    {locked ? `Unlock with ${track.requiredTier} Package` : track.description}
-                  </Text>
-                  <Text style={styles.sessionDuration}>
-                    {Math.floor(track.duration / 60)} minutes
-                  </Text>
-                </View>
-                {locked && (
-                  <View style={styles.lockContainer}>
-                    <Text style={styles.lockText}>Premium Only</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
-          </LinearGradient>
-        ) : (
-          <TouchableOpacity
-            style={[styles.sessionCard, locked && styles.lockedCard]}
-            onPress={() => handleTrackPress(track)}
-            disabled={isPlaying}
-          >
-            <View style={styles.sessionCardContent}>
-              <View style={styles.sessionInfo}>
-                <Text style={styles.sessionTitle}>{track.name}</Text>
-                <Text style={styles.sessionSubtitle}>{track.subtitle}</Text>
-                <Text style={styles.sessionDescription}>
-                  {locked ? `Unlock with ${track.requiredTier} Package` : track.description}
-                </Text>
-                <Text style={styles.sessionDuration}>
-                  {Math.floor(track.duration / 60)} minutes
-                </Text>
-              </View>
-              {locked && (
-                <View style={styles.lockContainer}>
-                  <Text style={styles.lockText}>Premium Only</Text>
-                </View>
-              )}
-            </View>
-          </TouchableOpacity>
-        )}
-      </View>
+      <Card key={track.id} style={styles.trackCard}>
+        <TouchableOpacity
+          onPress={() => handleTrackPress(track)}
+          style={styles.trackButton}
+        >
+          <View style={styles.trackInfo}>
+            <H3 style={styles.trackTitle}>{track.name}</H3>
+            <BodySmall style={styles.trackDuration}>
+              {track.duration} minutes
+            </BodySmall>
+            <BodyMedium style={styles.trackDescription}>
+              {locked ? `Unlock with ${track.requiredTier} Package` : track.description}
+            </BodyMedium>
+          </View>
+          {locked && (
+            <Button
+              label="Unlock"
+              size="small"
+              onPress={() => navigation.navigate('Upgrade')}
+              style={styles.unlockButton}
+            />
+          )}
+        </TouchableOpacity>
+      </Card>
     );
-  }, [selectedTrack, handleTrackPress, isPlaying]);
+  }, [selectedTrack, handleTrackPress, navigation]);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Bonus Vault</Text>
-        <Text style={styles.subtitle}>Premium Reality Tools</Text>
+        <H1 style={styles.title}>Bonus Vault</H1>
+        <BodyMedium style={styles.subtitle}>Premium Reality Tools</BodyMedium>
       </View>
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 20 }
-        ]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.sessionsContainer}>
@@ -316,7 +281,6 @@ export const BonusPlayerScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      {/* Audio Controls */}
       <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
         <AudioControls
           audioPlayer={realityWaveGenerator}
@@ -337,104 +301,67 @@ export const BonusPlayerScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 20,
+    backgroundColor: theme.colors.background,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    padding: theme.spacing.screenPadding,
     paddingBottom: Platform.OS === 'ios' ? 180 : 160,
+  },
+  sessionsContainer: {
+    gap: theme.spacing.md,
+  },
+  trackCard: {
+    marginBottom: theme.spacing.md,
+  },
+  trackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  trackInfo: {
+    flex: 1,
+    marginRight: theme.spacing.md,
+  },
+  trackTitle: {
+    marginBottom: theme.spacing.xxs,
+    color: theme.colors.textPrimary,
+  },
+  trackDuration: {
+    color: theme.colors.accent,
+    marginBottom: theme.spacing.xs,
+  },
+  trackDescription: {
+    color: theme.colors.textSecondary,
+  },
+  unlockButton: {
+    minWidth: 80,
   },
   audioControlsContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.background,
-    paddingTop: 16,
+    backgroundColor: theme.colors.background,
+    paddingTop: theme.spacing.md,
     zIndex: 2,
   },
-  sessionsContainer: {
-    gap: 16,
+  header: {
+    paddingHorizontal: theme.spacing.screenPadding,
+    paddingTop: theme.spacing.screenPadding,
+    paddingBottom: theme.spacing.md,
   },
-  sessionCardContainer: {
-    marginBottom: 15,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  sessionCardBorder: {
-    padding: 2.5,
-    borderRadius: 16,
-  },
-  sessionCard: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 15,
-    overflow: 'hidden',
-  },
-  sessionCardContent: {
-    padding: 16,
-    paddingTop: 40,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  sessionInfo: {
-    flex: 1,
-    marginRight: 15,
-  },
-  sessionTitle: {
-    fontSize: 16,
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginBottom: 4,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xs,
   },
-  sessionSubtitle: {
+  subtitle: {
     fontSize: 14,
-    color: '#8E8E93',
-    marginBottom: 8,
-  },
-  sessionDescription: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  sessionDuration: {
-    fontSize: 11,
-    color: colors.accent,
-    fontWeight: '500',
-  },
-  lockContainer: {
-    position: 'absolute',
-    top: 8,
-    right: 16,
-    backgroundColor: colors.primary,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    zIndex: 2,
-  },
-  lockText: {
-    color: colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  lockedCard: {
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.md,
   },
 });
