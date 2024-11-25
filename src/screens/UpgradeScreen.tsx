@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import {
   StyleSheet,
   View,
@@ -32,7 +32,7 @@ interface SubscriptionPlan {
 
 const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
-    tier: SubscriptionTier.CORE,
+    tier: SubscriptionTier.PREMIUM,
     name: 'Reality Wave™',
     price: '$39',
     description: 'Transform anxiety with core reality-bending protocols',
@@ -42,103 +42,102 @@ const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       { title: '30-Minute Deep Programming', included: true },
       { title: 'Reality Command Center', included: true },
       { title: 'Progress Analytics', included: true },
-      { title: 'Pattern Recognition AI', included: false },
-      { title: 'Life Mastery Waves', included: false },
+      { title: 'Pattern Recognition AI', included: true },
+      { title: 'Life Mastery Waves', included: true },
     ],
     popular: true,
   },
   {
-    tier: SubscriptionTier.MASTER,
-    name: 'Master System',
-    price: '$79',
-    description: 'Advanced mastery with situation-specific protocols',
+    tier: SubscriptionTier.FREE,
+    name: 'Free Trial',
+    price: '$0',
+    description: 'Experience the basics of anxiety control',
     features: [
-      { title: 'All Core Features', included: true },
-      { title: 'Life Mastery Waves', included: true },
-      { title: 'Situation Mastery Suite', included: true },
-      { title: 'Pattern Recognition AI', included: true },
-      { title: 'Custom Wave Lab', included: true },
-      { title: 'Advanced Analytics', included: true },
-      { title: 'Daily Power System', included: false },
+      { title: '11-Minute Anxiety Crusher™', included: true },
+      { title: '3-Minute Emergency Reset', included: true },
+      { title: '30-Minute Deep Programming', included: false },
+      { title: 'Reality Command Center', included: false },
+      { title: 'Progress Analytics', included: false },
+      { title: 'Pattern Recognition AI', included: false },
+      { title: 'Life Mastery Waves', included: false },
     ],
-  },
-  {
-    tier: SubscriptionTier.OPTIMIZER,
-    name: 'Daily Optimizer',
-    price: '$29',
-    description: 'Daily power routines for consistent results',
-    features: [
-      { title: 'Morning Reality Field', included: true },
-      { title: 'Daytime Control Suite', included: true },
-      { title: 'Evening Integration', included: true },
-      { title: 'Quick Reality Checks', included: true },
-      { title: 'Pattern Interrupts', included: true },
-      { title: 'Success Amplifiers', included: true },
-      { title: 'Advanced Features', included: false },
-    ],
-  },
+  }
 ];
+
+interface PlanCardProps {
+  plan: SubscriptionPlan;
+  isSelected: boolean;
+  onSelect: (tier: SubscriptionTier) => void;
+  onUpgrade: (plan: SubscriptionPlan) => void;
+}
+
+const PlanCard = memo(({ plan, isSelected, onSelect, onUpgrade }: PlanCardProps) => {
+  const cardId = `plan-${plan.tier.toLowerCase()}`;
+  
+  return (
+    <TouchableOpacity
+      style={[styles.planCard, isSelected && styles.selectedCard]}
+      onPress={() => onSelect(plan.tier)}
+      activeOpacity={0.8}
+    >
+      <View style={styles.cardContent}>
+        {plan.popular && (
+          <View style={styles.popularBadge}>
+            <Text style={styles.popularText}>Most Popular</Text>
+          </View>
+        )}
+
+        <View style={styles.planHeader}>
+          <Text style={styles.planName}>{plan.name}</Text>
+          <Text style={styles.planPrice}>{plan.price}</Text>
+        </View>
+
+        <Text style={styles.planDescription}>{plan.description}</Text>
+
+        <View style={styles.featuresList}>
+          {plan.features.map((feature, index) => (
+            <View 
+              key={`${cardId}-feature-${index}`}
+              style={styles.featureItem}
+            >
+              <Ionicons
+                name={feature.included ? 'checkmark-circle' : 'close-circle'}
+                size={20}
+                color={feature.included ? colors.accent : colors.textSecondary}
+                style={styles.featureIcon}
+              />
+              <Text style={styles.featureText}>{feature.title}</Text>
+            </View>
+          ))}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.upgradeButton, isSelected && styles.selectedButton]}
+          onPress={() => onUpgrade(plan)}
+        >
+          <Text style={styles.upgradeButtonText}>
+            {isSelected ? 'Confirm Selection' : 'Select Plan'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+});
 
 export const UpgradeScreen: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionTier | null>(null);
 
-  const handleUpgrade = (plan: SubscriptionPlan) => {
+  const handleUpgrade = useCallback((plan: SubscriptionPlan) => {
     Alert.alert(
       'Coming Soon',
       'In-app purchases will be available in the next update. Stay tuned!',
       [{ text: 'OK' }]
     );
-  };
+  }, []);
 
-  const PlanCard = ({ plan }: { plan: SubscriptionPlan }) => {
-    const isSelected = selectedPlan === plan.tier;
-
-    return (
-      <TouchableOpacity
-        style={[styles.planCard, isSelected && styles.selectedCard]}
-        onPress={() => setSelectedPlan(plan.tier)}
-        activeOpacity={0.8}
-      >
-        <View style={styles.cardContent}>
-          {plan.popular && (
-            <View style={styles.popularBadge}>
-              <Text style={styles.popularText}>Most Popular</Text>
-            </View>
-          )}
-
-          <View style={styles.planHeader}>
-            <Text style={styles.planName}>{plan.name}</Text>
-            <Text style={styles.planPrice}>{plan.price}</Text>
-          </View>
-
-          <Text style={styles.planDescription}>{plan.description}</Text>
-
-          <View style={styles.featuresList}>
-            {plan.features.map((feature, index) => (
-              <View key={index} style={styles.featureItem}>
-                <Ionicons
-                  name={feature.included ? 'checkmark-circle' : 'close-circle'}
-                  size={20}
-                  color={feature.included ? colors.accent : colors.textSecondary}
-                  style={styles.featureIcon}
-                />
-                <Text style={styles.featureText}>{feature.title}</Text>
-              </View>
-            ))}
-          </View>
-
-          <TouchableOpacity
-            style={[styles.upgradeButton, isSelected && styles.selectedButton]}
-            onPress={() => handleUpgrade(plan)}
-          >
-            <Text style={styles.upgradeButtonText}>
-              {isSelected ? 'Confirm Selection' : 'Select Plan'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const handleSelect = useCallback((tier: SubscriptionTier) => {
+    setSelectedPlan(tier);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -153,7 +152,14 @@ export const UpgradeScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {SUBSCRIPTION_PLANS.map((plan) => (
-          <PlanCard key={plan.tier} plan={plan} />
+          <View key={`plan-container-${plan.tier.toLowerCase()}`}>
+            <PlanCard
+              plan={plan}
+              isSelected={selectedPlan === plan.tier}
+              onSelect={handleSelect}
+              onUpgrade={handleUpgrade}
+            />
+          </View>
         ))}
 
         <View style={styles.guaranteeSection}>
