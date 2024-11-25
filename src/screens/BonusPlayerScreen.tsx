@@ -126,50 +126,48 @@ export const BonusPlayerScreen: React.FC = () => {
     };
   }, [realityWaveGenerator, handlePlaybackStatusUpdate]);
 
-  const handleTrackPress = async (track: AudioTrackAccess) => {
-    try {
-      if (isLocked(track)) {
-        showUpgradeDialog(track);
-        return;
-      }
-
-      // Stop current track if playing
-      if (isPlaying) {
-        await realityWaveGenerator.stopRealityWave();
-      }
-
+  const handleTrackPress = useCallback((track: AudioTrackAccess) => {
+    const locked = !featureAccess.hasAccessToTrack(track.id);
+    if (locked) {
+      showUpgradeDialog(track);
+    } else {
       setSelectedTrack(track);
-      setIsPlaying(true);
-      await realityWaveGenerator.startRealityWave(track);
-      
-      // Track the bonus session start in metrics
-      metricsService.trackBonusSessionStart(track.id);
-    } catch (error) {
-      console.error('Error playing bonus track:', error);
-      Alert.alert('Playback Error', 'There was an error playing this track. Please try again.');
     }
-  };
+  }, [showUpgradeDialog]);
+
+  useEffect(() => {
+    const checkSubscriptionAndReset = async () => {
+      const locked = !featureAccess.hasAccessToTrack(selectedTrack.id);
+      if (locked && isPlaying) {
+        await handleStop();
+        showUpgradeDialog(selectedTrack);
+      }
+    };
+
+    checkSubscriptionAndReset();
+  }, [selectedTrack, isLocked, isPlaying, realityWaveGenerator, showUpgradeDialog]);
 
   const handlePlayPause = async () => {
     if (!selectedTrack) return;
 
     try {
-      // Check subscription status before allowing playback
-      if (isLocked(selectedTrack)) {
-        showUpgradeDialog(selectedTrack);
-        return;
-      }
-
       if (isPlaying) {
-        await realityWaveGenerator.stopRealityWave();
+        await realityWaveGenerator.pauseRealityWave();
         setIsPlaying(false);
       } else {
+        const locked = !featureAccess.hasAccessToTrack(selectedTrack.id);
+        if (locked) {
+          showUpgradeDialog(selectedTrack);
+          return;
+        }
+
         await realityWaveGenerator.startRealityWave(selectedTrack);
         setIsPlaying(true);
+        metricsService.trackBonusSessionStart(selectedTrack.id);
       }
     } catch (error) {
       console.error('Error toggling playback:', error);
-      Alert.alert('Playback Error', 'There was an error controlling playback. Please try again.');
+      Alert.alert('Playback Error', 'There was an error playing this track. Please try again.');
     }
   };
 
@@ -206,21 +204,6 @@ export const BonusPlayerScreen: React.FC = () => {
       realityWaveGenerator.stopRealityWave();
     };
   }, [realityWaveGenerator]);
-
-  useEffect(() => {
-    // Stop playback and reset state when subscription status changes
-    const checkSubscriptionAndReset = async () => {
-      if (selectedTrack && isLocked(selectedTrack) && isPlaying) {
-        await realityWaveGenerator.stopRealityWave();
-        setIsPlaying(false);
-        setProgress(0);
-        setSessionTime(0);
-        showUpgradeDialog(selectedTrack);
-      }
-    };
-
-    checkSubscriptionAndReset();
-  }, [selectedTrack, isLocked, isPlaying, realityWaveGenerator, showUpgradeDialog]);
 
   const handleSeek = useCallback(async (position: number) => {
     try {
