@@ -1,5 +1,6 @@
 import { SubscriptionTier, Feature, FeatureCategory, AudioTrackAccess } from './types';
 import { SESSION_DESCRIPTIONS, SESSION_SUBTITLES } from '../../constants/strings';
+import { Alert } from 'react-native';
 
 // Define available tracks with their access requirements
 export const AUDIO_TRACKS: AudioTrackAccess[] = [
@@ -56,6 +57,20 @@ export const FEATURES: Feature[] = [
     category: FeatureCategory.DAILY_POWER
   }
 ];
+
+export const showUpgradeDialog = (navigation: any) => {
+  Alert.alert(
+    'Premium Content',
+    'This session is only available to premium subscribers. Upgrade now to unlock all premium content!',
+    [
+      { text: 'Not Now', style: 'cancel' },
+      { 
+        text: 'Upgrade',
+        onPress: () => navigation.navigate('Subscription')
+      }
+    ]
+  );
+};
 
 class FeatureAccess {
   private userTier: SubscriptionTier = SubscriptionTier.FREE;
