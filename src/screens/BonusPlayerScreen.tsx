@@ -386,7 +386,10 @@ const styles = StyleSheet.create({
   },
   playerContainer: {
     position: 'absolute',
-    bottom: 0,
+    bottom: Platform.select({
+      ios: 90,
+      android: 80,
+    }),
     left: 0,
     right: 0,
     backgroundColor: Platform.select({
@@ -395,7 +398,7 @@ const styles = StyleSheet.create({
     }),
     paddingTop: 16,
     paddingBottom: Platform.select({
-      ios: 34,
+      ios: 16,
       android: 16,
     }),
     paddingHorizontal: 20,
