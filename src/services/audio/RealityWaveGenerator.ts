@@ -8,6 +8,9 @@ const AUDIO_SOURCES = {
   anxietyCrusher: require('../../../assets/audio/11-Minute Anxiety Crusher.mp3'),
   emergencyReset: require('../../../assets/audio/3-Minute Emergency Reset.mp3'),
   deepProgramming: require('../../../assets/audio/30-Minute Deep Reality Programming.mp3'),
+  successPattern: require('../../../assets/audio/success-pattern.mp3'),
+  focusField: require('../../../assets/audio/focus-field.mp3'),
+  sleepWave: require('../../../assets/audio/sleep-wave.mp3'),
 } as const;
 
 // Map track IDs to audio sources
@@ -15,6 +18,9 @@ const TRACK_AUDIO_MAP: Record<string, number> = {
   'anxiety-relief': AUDIO_SOURCES.anxietyCrusher,
   'emergency-reset': AUDIO_SOURCES.emergencyReset,
   'deep-reality': AUDIO_SOURCES.deepProgramming,
+  'success-pattern': AUDIO_SOURCES.successPattern,
+  'focus-field': AUDIO_SOURCES.focusField,
+  'sleep-wave': AUDIO_SOURCES.sleepWave,
 };
 
 export interface AudioTrack {

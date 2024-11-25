@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { AudioControls } from '../components/AudioControls';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { metricsService } from '../services/metrics/metricsService';
+import { useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,26 +29,32 @@ const BONUS_TRACKS: AudioTrackAccess[] = [
   {
     id: 'success-pattern',
     name: 'Success Pattern Activator™',
-    duration: 600, // 10 minutes in seconds
+    duration: 600,
     description: 'Activate your natural success patterns',
     requiredTier: SubscriptionTier.PREMIUM,
-    audioUrl: 'success-pattern.mp3'
+    audioUrl: 'success-pattern.mp3',
+    category: 'Bonus Reality Waves',
+    subtitle: 'Unlock your natural success patterns'
   },
   {
     id: 'focus-field',
     name: 'Focus Field Generator™',
-    duration: 420, // 7 minutes in seconds
+    duration: 420,
     description: 'Generate laser-sharp focus instantly',
     requiredTier: SubscriptionTier.PREMIUM,
-    audioUrl: 'focus-field.mp3'
+    audioUrl: 'focus-field.mp3',
+    category: 'Bonus Reality Waves',
+    subtitle: 'Achieve peak mental clarity'
   },
   {
     id: 'sleep-wave',
     name: 'Sleep Enhancement Wave™',
-    duration: 600, // 10 minutes in seconds
+    duration: 600,
     description: 'Enhance your sleep quality naturally',
     requiredTier: SubscriptionTier.PREMIUM,
-    audioUrl: 'sleep-wave.mp3'
+    audioUrl: 'sleep-wave.mp3',
+    category: 'Bonus Reality Waves',
+    subtitle: 'Experience deep, restorative sleep'
   }
 ];
 
@@ -56,11 +63,32 @@ export const BonusPlayerScreen: React.FC = () => {
   const [sessionTime, setSessionTime] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<AudioTrackAccess>(BONUS_TRACKS[0]);
-  const [realityWave] = useState(() => new RealityWaveGenerator());
+  const [realityWaveGenerator] = useState(() => new RealityWaveGenerator());
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+
+  // Check if a track is locked based on subscription tier
+  const isLocked = useCallback((track: AudioTrackAccess) => {
+    return !featureAccess.hasAccessToTrack(track.id);
+  }, []);
+
+  // Show upgrade dialog for locked content
+  const showUpgradeDialog = useCallback((track: AudioTrackAccess) => {
+    Alert.alert(
+      'Premium Content',
+      'This bonus session is only available to premium subscribers. Upgrade now to unlock all bonus content!',
+      [
+        { text: 'Not Now', style: 'cancel' },
+        { 
+          text: 'Upgrade',
+          onPress: () => navigation.navigate('Subscription')
+        }
+      ]
+    );
+  }, [navigation]);
 
   // Get available tracks based on user's subscription
   const availableTracks = featureAccess.getAvailableTracks();
@@ -68,8 +96,11 @@ export const BonusPlayerScreen: React.FC = () => {
 
   // Format time as mm:ss
   const formatTime = (seconds: number): string => {
+    if (!seconds || isNaN(seconds)) {
+      return '00:00';
+    }
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
@@ -79,16 +110,21 @@ export const BonusPlayerScreen: React.FC = () => {
     if (isPlaying && !isSeeking) {
       interval = setInterval(async () => {
         try {
-          const currentPosition = await realityWave.getCurrentPosition();
-          const totalDuration = await realityWave.getDuration();
+          const currentPosition = await realityWaveGenerator.getCurrentPosition();
+          const totalDuration = await realityWaveGenerator.getDuration();
           
           if (totalDuration > 0) {
             setProgress(currentPosition / totalDuration);
             setSessionTime(currentPosition);
             setDuration(totalDuration);
+          } else {
+            setSessionTime(0);
+            setDuration(selectedTrack.duration);
           }
         } catch (error) {
           console.error('Error updating progress:', error);
+          setSessionTime(0);
+          setDuration(selectedTrack.duration);
         }
       }, 1000);
     }
@@ -97,7 +133,7 @@ export const BonusPlayerScreen: React.FC = () => {
         clearInterval(interval);
       }
     };
-  }, [isPlaying, isSeeking, realityWave]);
+  }, [isPlaying, isSeeking, realityWaveGenerator, selectedTrack]);
 
   // Handle audio state changes
   const handlePlaybackStatusUpdate = useCallback(async (status: any) => {
@@ -117,44 +153,52 @@ export const BonusPlayerScreen: React.FC = () => {
   }, [selectedTrack]);
 
   useEffect(() => {
-    realityWave.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
+    realityWaveGenerator.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
     return () => {
-      realityWave.setOnPlaybackStatusUpdate(null);
+      realityWaveGenerator.setOnPlaybackStatusUpdate(null);
     };
-  }, [realityWave, handlePlaybackStatusUpdate]);
+  }, [realityWaveGenerator, handlePlaybackStatusUpdate]);
 
-  // Handle play/pause
-  const togglePlayPause = useCallback(async () => {
-    if (!featureAccess.hasAccessToTrack(selectedTrack.id)) {
-      showUpgradeDialog(selectedTrack);
-      return;
+  const handleTrackPress = async (track: AudioTrackAccess) => {
+    try {
+      if (isLocked(track)) {
+        showUpgradeDialog(track);
+        return;
+      }
+
+      // Stop current track if playing
+      if (isPlaying) {
+        await realityWaveGenerator.stopRealityWave();
+      }
+
+      setSelectedTrack(track);
+      setIsPlaying(true);
+      await realityWaveGenerator.startRealityWave(track);
+      
+      // Track the bonus session start in metrics
+      metricsService.trackBonusSessionStart(track.id);
+    } catch (error) {
+      console.error('Error playing bonus track:', error);
+      Alert.alert('Playback Error', 'There was an error playing this track. Please try again.');
     }
+  };
+
+  const handlePlayPause = async () => {
+    if (!selectedTrack) return;
 
     try {
-      setLoading(true);
-      if (!isPlaying) {
-        await realityWave.startRealityWave(selectedTrack);
-        setIsPlaying(true);
-      } else {
+      if (isPlaying) {
+        await realityWaveGenerator.stopRealityWave();
         setIsPlaying(false);
-        await realityWave.stopRealityWave();
-        setSessionTime(0);
-        setProgress(0);
+      } else {
+        await realityWaveGenerator.startRealityWave(selectedTrack);
+        setIsPlaying(true);
       }
     } catch (error) {
-      console.error('Error toggling bonus session:', error);
-      Alert.alert(
-        'Bonus Session Error',
-        'There was an error with the bonus session. Please try again.',
-        [{ text: 'OK' }]
-      );
-      setIsPlaying(false);
-      setSessionTime(0);
-      setProgress(0);
-    } finally {
-      setLoading(false);
+      console.error('Error toggling playback:', error);
+      Alert.alert('Playback Error', 'There was an error controlling playback. Please try again.');
     }
-  }, [isPlaying, realityWave, selectedTrack]);
+  };
 
   // Handle session selection
   const selectSession = async (track: AudioTrackAccess) => {
@@ -166,7 +210,7 @@ export const BonusPlayerScreen: React.FC = () => {
     try {
       if (isPlaying) {
         setIsPlaying(false);
-        await realityWave.stopRealityWave();
+        await realityWaveGenerator.stopRealityWave();
       }
       setSelectedTrack(track);
       setSessionTime(0);
@@ -176,38 +220,24 @@ export const BonusPlayerScreen: React.FC = () => {
     }
   };
 
-  // Show upgrade dialog
-  const showUpgradeDialog = (track: AudioTrackAccess) => {
-    Alert.alert(
-      'Upgrade Required',
-      `This ${track.name} bonus is part of the ${track.requiredTier} package. Upgrade to access this and other premium features.`,
-      [
-        {
-          text: 'Maybe Later',
-          style: 'cancel',
-        },
-        {
-          text: 'Learn More',
-          onPress: () => {
-            // Navigate to upgrade screen
-            // navigation.navigate('Upgrade');
-          },
-        },
-      ]
-    );
-  };
+  // Initialize duration when track changes
+  useEffect(() => {
+    setSessionTime(0);
+    setDuration(selectedTrack.duration);
+    setProgress(0);
+  }, [selectedTrack]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      realityWave.stopRealityWave();
+      realityWaveGenerator.stopRealityWave();
     };
-  }, [realityWave]);
+  }, [realityWaveGenerator]);
 
   const handleSeek = useCallback(async (position: number) => {
     try {
       setIsSeeking(true);
-      await realityWave.seekTo(position);
+      await realityWaveGenerator.seekTo(position);
       setSessionTime(position);
       setProgress(position / selectedTrack.duration);
     } catch (error) {
@@ -215,25 +245,25 @@ export const BonusPlayerScreen: React.FC = () => {
     } finally {
       setIsSeeking(false);
     }
-  }, [realityWave, selectedTrack.duration]);
+  }, [realityWaveGenerator, selectedTrack.duration]);
 
   const handleSeeking = useCallback((value: number) => {
     setSessionTime(value);
     setProgress(value / selectedTrack.duration);
   }, [selectedTrack.duration]);
 
-  const BonusCard = ({ track }: { track: AudioTrackAccess }) => {
-    const isLocked = !featureAccess.hasAccessToTrack(track.id);
-    const isSelected = selectedTrack.id === track.id;
-
+  const renderTrackCard = (track: AudioTrackAccess, isSelected: boolean) => {
+    const locked = isLocked(track);
+    
     return (
       <TouchableOpacity
+        key={track.id}
         style={[
           styles.sessionCard,
           isSelected && styles.selectedCard,
-          isLocked && styles.lockedCard,
+          locked && styles.lockedCard,
         ]}
-        onPress={() => selectSession(track)}
+        onPress={() => handleTrackPress(track)}
         activeOpacity={0.7}
       >
         <LinearGradient
@@ -243,18 +273,21 @@ export const BonusPlayerScreen: React.FC = () => {
           style={styles.cardGradient}
         >
           <View style={styles.cardContent}>
-            <Text style={[styles.sessionTitle, isLocked && styles.lockedText]}>
+            <Text style={[styles.sessionTitle, locked && styles.lockedText]}>
               {track.name}
             </Text>
-            <Text style={[styles.sessionDescription, isLocked && styles.lockedText]}>
+            <Text style={[styles.sessionDescription, locked && styles.lockedText]}>
               {track.description}
             </Text>
-            <Text style={[styles.sessionDuration, isLocked && styles.lockedText]}>
+            <Text style={[styles.sessionSubtitle, locked && styles.lockedText]}>
+              {track.subtitle}
+            </Text>
+            <Text style={[styles.sessionDuration, locked && styles.lockedText]}>
               {Math.floor(track.duration / 60)} minutes
             </Text>
-            {isLocked && (
+            {locked && (
               <View style={styles.lockContainer}>
-                <Text style={styles.lockText}>Premium</Text>
+                <Text style={styles.lockText}>Premium Only</Text>
               </View>
             )}
           </View>
@@ -280,7 +313,7 @@ export const BonusPlayerScreen: React.FC = () => {
       >
         <View style={styles.sessionsContainer}>
           {BONUS_TRACKS.map((track) => (
-            <BonusCard key={track.id} track={track} />
+            renderTrackCard(track, selectedTrack.id === track.id)
           ))}
         </View>
       </ScrollView>
@@ -288,7 +321,7 @@ export const BonusPlayerScreen: React.FC = () => {
       <BlurView intensity={100} style={styles.playerContainer}>
         <AudioControls
           isPlaying={isPlaying}
-          onPlayPause={togglePlayPause}
+          onPlayPause={handlePlayPause}
           progress={progress}
           duration={duration}
           currentTime={sessionTime}
@@ -361,7 +394,12 @@ const styles = StyleSheet.create({
   sessionDescription: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: 4,
+  },
+  sessionSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 8,
   },
   sessionDuration: {
     fontSize: 13,
