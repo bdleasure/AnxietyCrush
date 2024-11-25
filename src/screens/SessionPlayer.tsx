@@ -158,7 +158,7 @@ export const SessionPlayer: React.FC = () => {
         { text: 'Not Now', style: 'cancel' },
         { 
           text: 'Upgrade',
-          onPress: () => navigation.navigate('Subscription')
+          onPress: () => navigation.navigate('Upgrade')
         }
       ]
     );

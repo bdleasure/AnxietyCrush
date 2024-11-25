@@ -6,6 +6,7 @@ import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { MainNavigator } from './MainNavigator';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from '../theme/colors';
+import { UpgradeScreen } from '../screens/UpgradeScreen';
 
 const Stack = createNativeStackNavigator();
 const ONBOARDING_COMPLETE_KEY = '@anxiety_crush:onboarding_complete';
@@ -64,7 +65,17 @@ export const AppNavigator: React.FC = () => {
             {props => <OnboardingScreen {...props} onComplete={handleOnboardingComplete} />}
           </Stack.Screen>
         ) : (
-          <Stack.Screen name="Main" component={MainNavigator} />
+          <>
+            <Stack.Screen name="Main" component={MainNavigator} />
+            <Stack.Screen 
+              name="Upgrade" 
+              component={UpgradeScreen}
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom'
+              }}
+            />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
