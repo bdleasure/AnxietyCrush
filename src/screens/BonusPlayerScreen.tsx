@@ -159,11 +159,11 @@ export const BonusPlayerScreen: React.FC = () => {
           return;
         }
 
-        await realityWaveGenerator.startRealityWave(selectedTrack);
+        await realityWaveGenerator.startRealityWave(selectedTrack, true); // Add resumeFromLastPosition flag
         setIsPlaying(true);
         metricsService.trackBonusSessionStart(selectedTrack.id);
       } else {
-        await realityWaveGenerator.stopRealityWave();
+        await realityWaveGenerator.pauseRealityWave();
         setIsPlaying(false);
       }
     } catch (error) {

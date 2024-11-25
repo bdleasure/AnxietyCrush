@@ -99,13 +99,6 @@ export const SessionPlayer: React.FC = () => {
     }
   }, [selectedTrack, duration]);
 
-  useEffect(() => {
-    realityWave.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
-    return () => {
-      realityWave.setOnPlaybackStatusUpdate(null);
-    };
-  }, [realityWave, handlePlaybackStatusUpdate]);
-
   // Handle play/pause
   const togglePlayPause = useCallback(async () => {
     if (!featureAccess.hasAccessToTrack(selectedTrack.id)) {
@@ -116,10 +109,10 @@ export const SessionPlayer: React.FC = () => {
     try {
       setLoading(true);
       if (!isPlaying) {
-        await realityWave.startRealityWave(selectedTrack);
+        await realityWave.startRealityWave(selectedTrack, true); // Add resumeFromLastPosition flag
         setIsPlaying(true);
       } else {
-        await realityWave.stopRealityWave();
+        await realityWave.pauseRealityWave();
         setIsPlaying(false);
       }
     } catch (error) {
