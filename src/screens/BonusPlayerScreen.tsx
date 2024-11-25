@@ -159,11 +159,11 @@ export const BonusPlayerScreen: React.FC = () => {
           return;
         }
 
-        await realityWaveGenerator.startRealityWave(selectedTrack, true); // Add resumeFromLastPosition flag
+        await realityWaveGenerator.startRealityWave(selectedTrack);
         setIsPlaying(true);
         metricsService.trackBonusSessionStart(selectedTrack.id);
       } else {
-        await realityWaveGenerator.pauseRealityWave();
+        await realityWaveGenerator.stopRealityWave();
         setIsPlaying(false);
       }
     } catch (error) {
@@ -331,19 +331,52 @@ export const BonusPlayerScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      <BlurView intensity={100} style={styles.playerContainer}>
+      {/* Audio Controls */}
+      <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
         <AudioControls
-          isPlaying={isPlaying}
           onPlayPause={handlePlayPause}
           onSeek={handleSeek}
           onSeeking={handleSeeking}
           progress={progress}
           position={sessionTime}
           duration={duration}
+          isPlaying={isPlaying}
           disabled={!selectedTrack || loading}
           audioPlayer={realityWaveGenerator}
         />
       </BlurView>
+
+      {isPlaying && (
+        <BlurView intensity={100} tint="dark" style={styles.playerContainer}>
+          <View style={styles.progressContainer}>
+            <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+          </View>
+
+          <View style={styles.controlsContainer}>
+            <View style={styles.timerContainer}>
+              <Text style={styles.timerText}>{formatTime(sessionTime)}</Text>
+              <Text style={styles.sessionName} numberOfLines={1}>
+                {selectedTrack?.name}
+              </Text>
+            </View>
+            
+            <TouchableOpacity
+              style={[styles.button, isPlaying && styles.buttonActive]}
+              onPress={handlePlayPause}
+              disabled={loading}
+              activeOpacity={0.7}
+            >
+              {loading ? (
+                <ActivityIndicator color={colors.textPrimary} />
+              ) : (
+                <Text style={styles.buttonText}>
+                  {isPlaying ? 'Stop' : 'Start'}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </BlurView>
+      )}
     </SafeAreaView>
   );
 };
@@ -374,6 +407,72 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 180 : 160,
+  },
+  playerContainer: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 85 : 60,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.cardBackground + '80',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    overflow: 'hidden',
+  },
+  progressContainer: {
+    height: 3,
+    backgroundColor: colors.secondary + '40',
+    width: '100%',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: colors.accent,
+  },
+  controlsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    paddingBottom: 20,
+  },
+  timerContainer: {
+    flex: 1,
+    marginRight: 20,
+  },
+  timerText: {
+    fontSize: 19,
+    color: colors.textPrimary,
+    fontWeight: 'bold',
+  },
+  sessionName: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  button: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  buttonActive: {
+    backgroundColor: colors.error,
+  },
+  buttonText: {
+    fontSize: 13,
+    color: colors.textPrimary,
+    marginLeft: 8,
+  },
+  audioControlsContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.background,
+    paddingTop: 16,
+    zIndex: 2,
   },
   sessionsContainer: {
     gap: 16,
@@ -440,24 +539,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   lockedCard: {
-  },
-  playerContainer: {
-    position: 'absolute',
-    bottom: Platform.select({
-      ios: 90,
-      android: 80,
-    }),
-    left: 0,
-    right: 0,
-    backgroundColor: Platform.select({
-      ios: 'transparent',
-      android: colors.cardBackground,
-    }),
-    paddingTop: 16,
-    paddingBottom: Platform.select({
-      ios: 16,
-      android: 16,
-    }),
-    paddingHorizontal: 20,
   },
 });

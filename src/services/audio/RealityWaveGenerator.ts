@@ -67,7 +67,6 @@ export class RealityWaveGenerator {
   private sound: Audio.Sound | null = null;
   private onPlaybackStatusUpdateCallback: ((status: any) => void) | null = null;
   private currentTrack: AudioTrackAccess | null = null;
-  private lastPosition: number = 0;
 
   constructor() {
     Audio.setAudioModeAsync({
@@ -108,26 +107,8 @@ export class RealityWaveGenerator {
     }
   }
 
-  private handlePlaybackStatusUpdate = (status: any) => {
-    if (status.isLoaded && status.positionMillis !== undefined) {
-      this.lastPosition = status.positionMillis;
-    }
-    if (this.onPlaybackStatusUpdateCallback) {
-      this.onPlaybackStatusUpdateCallback(status);
-    }
-  };
-
-  async startRealityWave(track: AudioTrackAccess, resumeFromLastPosition: boolean = false): Promise<void> {
+  async startRealityWave(track: AudioTrackAccess): Promise<void> {
     try {
-      // If we're already playing this track and want to resume
-      if (this.sound && this.currentTrack?.id === track.id && resumeFromLastPosition) {
-        await this.sound.setStatusAsync({ 
-          shouldPlay: true,
-          positionMillis: this.lastPosition 
-        });
-        return;
-      }
-
       await this.cleanupSound();
 
       const audioSource = TRACK_AUDIO_MAP[track.id];
@@ -137,10 +118,7 @@ export class RealityWaveGenerator {
 
       const { sound } = await Audio.Sound.createAsync(
         audioSource,
-        { 
-          shouldPlay: true,
-          positionMillis: resumeFromLastPosition ? this.lastPosition : 0 
-        },
+        { shouldPlay: true },
         this.handlePlaybackStatusUpdate
       );
 
@@ -152,19 +130,14 @@ export class RealityWaveGenerator {
     }
   }
 
-  async pauseRealityWave(): Promise<void> {
-    try {
-      if (this.sound) {
-        const status = await this.sound.getStatusAsync();
-        if (status.isLoaded) {
-          this.lastPosition = status.positionMillis;
-        }
-        await this.sound.setStatusAsync({ shouldPlay: false });
-      }
-    } catch (error) {
-      console.error('Error pausing reality wave:', error);
-      throw error;
+  private handlePlaybackStatusUpdate = (status: any) => {
+    if (this.onPlaybackStatusUpdateCallback) {
+      this.onPlaybackStatusUpdateCallback(status);
     }
+  };
+
+  setOnPlaybackStatusUpdate(callback: ((status: any) => void) | null) {
+    this.onPlaybackStatusUpdateCallback = callback;
   }
 
   async stopRealityWave(): Promise<void> {
@@ -176,17 +149,25 @@ export class RealityWaveGenerator {
       if (this.onPlaybackStatusUpdateCallback) {
         this.onPlaybackStatusUpdateCallback({
           isLoaded: false,
-          didJustFinish: false
+          isPlaying: false,
+          positionMillis: 0,
+          durationMillis: 0,
+          didJustFinish: true
         });
       }
     } catch (error) {
       console.error('Error stopping reality wave:', error);
-      throw error;
+      // Even if there's an error, try to notify UI
+      if (this.onPlaybackStatusUpdateCallback) {
+        this.onPlaybackStatusUpdateCallback({
+          isLoaded: false,
+          isPlaying: false,
+          positionMillis: 0,
+          durationMillis: 0,
+          didJustFinish: true
+        });
+      }
     }
-  }
-
-  setOnPlaybackStatusUpdate(callback: ((status: any) => void) | null) {
-    this.onPlaybackStatusUpdateCallback = callback;
   }
 
   async getCurrentPosition(): Promise<number> {
