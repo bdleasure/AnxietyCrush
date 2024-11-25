@@ -29,7 +29,7 @@ const { width, height } = Dimensions.get('window');
 export const SessionPlayer: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedTrack, setSelectedTrack] = useState<AudioTrackAccess>(() => {
     // Find the first unlocked track
     const firstUnlockedTrack = AUDIO_TRACKS.find(track => featureAccess.hasAccessToTrack(track.id));
@@ -38,18 +38,123 @@ export const SessionPlayer: React.FC = () => {
   const [realityWaveGenerator] = useState(() => new RealityWaveGenerator());
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [trackDurations, setTrackDurations] = useState<Record<string, number>>({});
   const [isSeeking, setIsSeeking] = useState(false);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
-  // Set initial duration when component mounts
+  // Load initial track duration immediately
   useEffect(() => {
-    setDuration(selectedTrack.duration * 60);
-  }, []);
+    const loadInitialDuration = async () => {
+      if (!selectedTrack) return;
+      
+      try {
+        // Create a new temporary generator for initial load
+        const tempGenerator = new RealityWaveGenerator();
+        await tempGenerator.startRealityWave(selectedTrack, false);
+        const actualDuration = await tempGenerator.getDuration();
+        await tempGenerator.stopRealityWave();
+        
+        // Update both duration and trackDurations
+        setDuration(actualDuration);
+        setTrackDurations(prev => ({
+          ...prev,
+          [selectedTrack.id]: actualDuration
+        }));
+      } catch (error) {
+        console.error('Error loading initial duration:', error);
+        const fallbackDuration = selectedTrack.duration * 60;
+        setDuration(fallbackDuration);
+        setTrackDurations(prev => ({
+          ...prev,
+          [selectedTrack.id]: fallbackDuration
+        }));
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Get available tracks based on user's subscription
-  const availableTracks = featureAccess.getAvailableTracks();
-  const lockedTracks = AUDIO_TRACKS.filter(track => !featureAccess.hasAccessToTrack(track.id));
+    loadInitialDuration();
+  }, [selectedTrack]);
+
+  // Load remaining track durations after initial load
+  useEffect(() => {
+    if (loading) return; // Don't load other tracks until initial track is loaded
+    
+    const loadRemainingDurations = async () => {
+      const durations = { ...trackDurations };
+      
+      for (const track of AUDIO_TRACKS) {
+        if (track.id === selectedTrack.id) continue; // Skip selected track
+        if (durations[track.id]) continue; // Skip already loaded durations
+        
+        try {
+          const tempGenerator = new RealityWaveGenerator();
+          await tempGenerator.startRealityWave(track, false);
+          const actualDuration = await tempGenerator.getDuration();
+          await tempGenerator.stopRealityWave();
+          durations[track.id] = actualDuration;
+        } catch (error) {
+          console.error(`Error loading duration for track ${track.id}:`, error);
+          durations[track.id] = track.duration * 60;
+        }
+      }
+      
+      setTrackDurations(durations);
+    };
+
+    loadRemainingDurations();
+  }, [loading, selectedTrack]);
+
+  // Update duration when selected track changes
+  const handleTrackPress = async (track: AudioTrackAccess) => {
+    if (isLocked(track)) {
+      navigation.navigate('Upgrade');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // If a track is currently playing, stop it
+      if (isPlaying) {
+        await realityWaveGenerator.stopRealityWave();
+        setIsPlaying(false);
+      }
+
+      // Set the new track
+      setSelectedTrack(track);
+      setSessionTime(0);
+      setProgress(0);
+      
+      // Use the pre-loaded duration if available
+      if (trackDurations[track.id]) {
+        setDuration(trackDurations[track.id]);
+        setLoading(false);
+      } else {
+        // Load duration if not available
+        try {
+          const tempGenerator = new RealityWaveGenerator();
+          await tempGenerator.startRealityWave(track, false);
+          const actualDuration = await tempGenerator.getDuration();
+          await tempGenerator.stopRealityWave();
+          
+          setDuration(actualDuration);
+          setTrackDurations(prev => ({
+            ...prev,
+            [track.id]: actualDuration
+          }));
+        } catch (error) {
+          console.error('Error loading track duration:', error);
+          setDuration(track.duration * 60);
+        }
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error changing track:', error);
+      setLoading(false);
+    }
+  };
 
   // Format time as mm:ss
   const formatTime = (seconds: number): string => {
@@ -84,7 +189,6 @@ export const SessionPlayer: React.FC = () => {
   // Initialize duration when track changes
   useEffect(() => {
     setSessionTime(0);
-    setDuration(selectedTrack.duration * 60); // Convert minutes to seconds
     setProgress(0);
   }, [selectedTrack]);
 
@@ -98,7 +202,7 @@ export const SessionPlayer: React.FC = () => {
       // Record completed session
       await metricsService.recordSession({
         trackId: selectedTrack.id,
-        duration: selectedTrack.duration,
+        duration: duration / 60, // Convert seconds back to minutes for metrics
         completed: true,
       });
     } else if (status.isLoaded && status.durationMillis) {
@@ -116,34 +220,6 @@ export const SessionPlayer: React.FC = () => {
       realityWaveGenerator.setOnPlaybackStatusUpdate(null);
     };
   }, [realityWaveGenerator, handlePlaybackStatusUpdate]);
-
-  // Handle track selection
-  const handleTrackPress = async (track: AudioTrackAccess) => {
-    if (isLocked(track) || loading) {
-      navigation.navigate('Upgrade');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      // If a track is currently playing, stop it
-      if (isPlaying) {
-        await realityWaveGenerator.stopRealityWave();
-        setIsPlaying(false);
-      }
-
-      // Set the new track
-      setSelectedTrack(track);
-      setSessionTime(0);
-      setProgress(0);
-      setDuration(track.duration * 60);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error changing track:', error);
-      setLoading(false);
-    }
-  };
 
   // Handle play/pause
   const handlePlayPause = async () => {
@@ -253,7 +329,9 @@ export const SessionPlayer: React.FC = () => {
                   <View style={styles.trackInfo}>
                     <H3 style={styles.trackTitle}>{track.name}</H3>
                     <BodySmall style={styles.trackDuration}>
-                      {track.duration} minutes
+                      {trackDurations[track.id] ? 
+                        `${Math.floor(trackDurations[track.id] / 60)} minutes ${Math.floor(trackDurations[track.id] % 60)} seconds` :
+                        `${track.duration} minutes`}
                     </BodySmall>
                     <BodyMedium style={styles.trackDescription}>
                       {track.description}

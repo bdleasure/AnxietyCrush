@@ -30,7 +30,7 @@ const { width, height } = Dimensions.get('window');
 export const BonusPlayerScreen: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedTrack, setSelectedTrack] = useState<AudioTrackAccess>(() => {
     // Find the first unlocked track
     const firstUnlockedTrack = BONUS_TRACKS.find(track => featureAccess.hasAccessToTrack(track.id));
@@ -39,14 +39,82 @@ export const BonusPlayerScreen: React.FC = () => {
   const [realityWaveGenerator] = useState(() => new RealityWaveGenerator());
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [trackDurations, setTrackDurations] = useState<Record<string, number>>({});
   const [isSeeking, setIsSeeking] = useState(false);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
-  // Set initial duration when component mounts
+  // Load initial track duration immediately
   useEffect(() => {
-    setDuration(selectedTrack.duration * 60);
-  }, []);
+    const loadInitialDuration = async () => {
+      if (!selectedTrack) return;
+      
+      try {
+        // Create a new temporary generator for initial load
+        const tempGenerator = new RealityWaveGenerator();
+        await tempGenerator.startRealityWave(selectedTrack, false);
+        const actualDuration = await tempGenerator.getDuration();
+        await tempGenerator.stopRealityWave();
+        
+        // Update both duration and trackDurations
+        setDuration(actualDuration);
+        setTrackDurations(prev => ({
+          ...prev,
+          [selectedTrack.id]: actualDuration
+        }));
+      } catch (error) {
+        console.error('Error loading initial duration:', error);
+        const fallbackDuration = selectedTrack.duration * 60;
+        setDuration(fallbackDuration);
+        setTrackDurations(prev => ({
+          ...prev,
+          [selectedTrack.id]: fallbackDuration
+        }));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitialDuration();
+  }, [selectedTrack]);
+
+  // Load remaining track durations after initial load
+  useEffect(() => {
+    if (loading) return; // Don't load other tracks until initial track is loaded
+    
+    const loadRemainingDurations = async () => {
+      const durations = { ...trackDurations };
+      
+      for (const track of BONUS_TRACKS) {
+        if (track.id === selectedTrack.id) continue; // Skip selected track
+        if (durations[track.id]) continue; // Skip already loaded durations
+        
+        try {
+          const tempGenerator = new RealityWaveGenerator();
+          await tempGenerator.startRealityWave(track, false);
+          const actualDuration = await tempGenerator.getDuration();
+          await tempGenerator.stopRealityWave();
+          durations[track.id] = actualDuration;
+        } catch (error) {
+          console.error(`Error loading duration for track ${track.id}:`, error);
+          durations[track.id] = track.duration * 60;
+        }
+      }
+      
+      setTrackDurations(durations);
+    };
+
+    loadRemainingDurations();
+  }, [loading, selectedTrack]);
+
+  // Update duration when selected track changes
+  useEffect(() => {
+    if (selectedTrack && trackDurations[selectedTrack.id]) {
+      setDuration(trackDurations[selectedTrack.id]);
+      setSessionTime(0);
+      setProgress(0);
+    }
+  }, [selectedTrack, trackDurations]);
 
   // Check if a track is locked based on subscription tier
   const isLocked = useCallback((track: AudioTrackAccess) => {
@@ -79,6 +147,35 @@ export const BonusPlayerScreen: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Handle playback status updates
+  const handlePlaybackStatusUpdate = useCallback(async (status: any) => {
+    if (status.didJustFinish) {
+      setIsPlaying(false);
+      setSessionTime(0);
+      setProgress(0);
+      
+      // Record completed session
+      await metricsService.recordSession({
+        trackId: selectedTrack.id,
+        duration: duration / 60, // Convert seconds back to minutes for metrics
+        completed: true,
+      });
+    } else if (status.isLoaded && status.durationMillis) {
+      const newDuration = status.durationMillis / 1000;
+      // Only update duration if it's significantly different
+      if (Math.abs(newDuration - duration) > 1) {
+        setDuration(newDuration);
+      }
+    }
+  }, [selectedTrack, duration]);
+
+  useEffect(() => {
+    realityWaveGenerator.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
+    return () => {
+      realityWaveGenerator.setOnPlaybackStatusUpdate(null);
+    };
+  }, [realityWaveGenerator, handlePlaybackStatusUpdate]);
+
   // Update progress and handle audio state
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -102,32 +199,10 @@ export const BonusPlayerScreen: React.FC = () => {
     };
   }, [isPlaying, isSeeking, realityWaveGenerator, duration]);
 
-  // Handle audio state changes
-  const handlePlaybackStatusUpdate = useCallback(async (status: any) => {
-    if (status.didJustFinish) {
-      setIsPlaying(false);
-      setSessionTime(0);
-      setProgress(0);
-    } else if (status.isLoaded && status.durationMillis) {
-      const newDuration = status.durationMillis / 1000;
-      // Only update duration if it's significantly different
-      if (Math.abs(newDuration - duration) > 1) {
-        setDuration(newDuration);
-      }
-    }
-  }, [duration]);
-
-  useEffect(() => {
-    realityWaveGenerator.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
-    return () => {
-      realityWaveGenerator.setOnPlaybackStatusUpdate(null);
-    };
-  }, [realityWaveGenerator, handlePlaybackStatusUpdate]);
-
   // Handle track selection
   const handleTrackPress = async (track: AudioTrackAccess) => {
-    if (isLocked(track) || loading) {
-      showUpgradeDialog(track);
+    if (isLocked(track)) {
+      navigation.navigate('Upgrade');
       return;
     }
 
@@ -144,8 +219,30 @@ export const BonusPlayerScreen: React.FC = () => {
       setSelectedTrack(track);
       setSessionTime(0);
       setProgress(0);
-      setDuration(track.duration * 60);
-      setLoading(false);
+      
+      // Use the pre-loaded duration if available
+      if (trackDurations[track.id]) {
+        setDuration(trackDurations[track.id]);
+        setLoading(false);
+      } else {
+        // Load duration if not available
+        try {
+          const tempGenerator = new RealityWaveGenerator();
+          await tempGenerator.startRealityWave(track, false);
+          const actualDuration = await tempGenerator.getDuration();
+          await tempGenerator.stopRealityWave();
+          
+          setDuration(actualDuration);
+          setTrackDurations(prev => ({
+            ...prev,
+            [track.id]: actualDuration
+          }));
+        } catch (error) {
+          console.error('Error loading track duration:', error);
+          setDuration(track.duration * 60);
+        }
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Error changing track:', error);
       setLoading(false);
@@ -182,7 +279,6 @@ export const BonusPlayerScreen: React.FC = () => {
   // Initialize duration when track changes
   useEffect(() => {
     setSessionTime(0);
-    setDuration(selectedTrack.duration * 60); // Convert minutes to seconds
     setProgress(0);
   }, [selectedTrack]);
 
@@ -237,7 +333,9 @@ export const BonusPlayerScreen: React.FC = () => {
           <View style={styles.trackInfo}>
             <H3 style={styles.trackTitle}>{track.name}</H3>
             <BodySmall style={styles.trackDuration}>
-              {track.duration} minutes
+              {trackDurations[track.id] ? 
+                `${Math.floor(trackDurations[track.id] / 60)} minutes ${Math.floor(trackDurations[track.id] % 60)} seconds` :
+                `${track.duration} minutes`}
             </BodySmall>
             <BodyMedium style={styles.trackDescription}>
               {track.description}
@@ -251,8 +349,8 @@ export const BonusPlayerScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <H1 style={styles.title}>Bonus Vault</H1>
-        <BodyMedium style={styles.subtitle}>Premium Reality Tools</BodyMedium>
+        <H1 style={styles.title}>Bonus Sessions</H1>
+        <BodyMedium style={styles.subtitle}>Enhance your transformation</BodyMedium>
       </View>
 
       <ScrollView
