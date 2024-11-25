@@ -8,7 +8,6 @@ import { SessionPlayer } from '../screens/SessionPlayer';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { ProgressScreen } from '../screens/ProgressScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import { BonusVaultScreen } from '../screens/BonusVaultScreen';
 import { BonusPlayerScreen } from '../screens/BonusPlayerScreen';
 
 const Tab = createBottomTabNavigator();
