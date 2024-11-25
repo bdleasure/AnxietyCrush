@@ -1,6 +1,7 @@
 import { SubscriptionTier, Feature, FeatureCategory, AudioTrackAccess } from './types';
 import { SESSION_DESCRIPTIONS, SESSION_SUBTITLES } from '../../constants/strings';
 import { Alert } from 'react-native';
+import { BONUS_TRACKS } from '../../constants/tracks';
 
 // Define available tracks with their access requirements
 export const AUDIO_TRACKS: AudioTrackAccess[] = [
@@ -100,8 +101,13 @@ class FeatureAccess {
 
   // Check if user has access to a specific audio track
   hasAccessToTrack(trackId: string): boolean {
-    const track = AUDIO_TRACKS.find(t => t.id === trackId);
+    const track = AUDIO_TRACKS.find(t => t.id === trackId) || BONUS_TRACKS.find(t => t.id === trackId);
     if (!track) return false;
+    
+    // If the track is free, everyone has access
+    if (track.requiredTier === SubscriptionTier.FREE) {
+      return true;
+    }
     
     const tierLevel = {
       [SubscriptionTier.FREE]: 0,

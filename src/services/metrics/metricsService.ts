@@ -49,52 +49,32 @@ class MetricsService {
       const metrics = await this.getMetrics();
       const today = new Date().toISOString().split('T')[0];
       
-      // Update basic metrics
-      metrics.sessionsCompleted += 1;
-      metrics.realityScore = Math.min(100, metrics.realityScore + 5);
-      metrics.lastSessionDate = today;
-
-      // Update daily progress
-      if (!metrics.dailyProgress) {
-        metrics.dailyProgress = [];
-      }
-
-      const todayProgress = metrics.dailyProgress.find(p => p.date === today);
-      if (todayProgress) {
-        todayProgress.sessionsCompleted += 1;
-        todayProgress.realityScore = metrics.realityScore;
-      } else {
-        metrics.dailyProgress.push({
-          date: today,
-          sessionsCompleted: 1,
-          realityScore: metrics.realityScore,
-        });
-      }
-
-      // Keep only last 7 days
-      metrics.dailyProgress = metrics.dailyProgress
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 7);
-
-      // Update streak
-      if (metrics.lastSessionDate) {
-        const lastDate = new Date(metrics.lastSessionDate);
-        const currentDate = new Date();
-        const diffTime = Math.abs(currentDate.getTime() - lastDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays <= 1) {
-          metrics.currentStreak += 1;
-        } else {
-          metrics.currentStreak = 1;
-        }
-      } else {
-        metrics.currentStreak = 1;
-      }
-
+      // Update metrics
+      metrics.sessionsCompleted++;
+      
+      // Store updated metrics
       await AsyncStorage.setItem(METRICS_KEY, JSON.stringify(metrics));
+      
+      // Store session record
+      const sessions = await this.getStoredSessions();
+      sessions.push(session);
+      await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
     } catch (error) {
       console.error('Error recording session:', error);
+    }
+  }
+
+  async trackBonusSessionStart(trackId: string): Promise<void> {
+    try {
+      const session: SessionRecord = {
+        id: `bonus-${trackId}-${Date.now()}`,
+        trackId,
+        startTime: new Date().toISOString(),
+        type: 'bonus'
+      };
+      await this.recordSession(session);
+    } catch (error) {
+      console.error('Error tracking bonus session start:', error);
     }
   }
 }

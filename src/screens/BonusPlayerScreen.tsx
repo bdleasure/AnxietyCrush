@@ -14,49 +14,16 @@ import {
 import { RealityWaveGenerator } from '../services/audio/RealityWaveGenerator';
 import { colors } from '../theme/colors';
 import { BlurView } from 'expo-blur';
-import { featureAccess } from '../services/subscription/featureAccess';
-import { AudioTrackAccess, SubscriptionTier } from '../services/subscription/types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AudioControls } from '../components/AudioControls';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AudioTrackAccess } from '../services/subscription/types';
+import { featureAccess } from '../services/subscription/featureAccess';
 import { metricsService } from '../services/metrics/metricsService';
 import { useNavigation } from '@react-navigation/native';
+import { BONUS_TRACKS } from '../constants/tracks';
 
 const { width, height } = Dimensions.get('window');
-
-// Define bonus content as AudioTrackAccess type for compatibility
-const BONUS_TRACKS: AudioTrackAccess[] = [
-  {
-    id: 'success-pattern',
-    name: 'Success Pattern Activator™',
-    duration: 600,
-    description: 'Activate your natural success patterns',
-    requiredTier: SubscriptionTier.PREMIUM,
-    audioUrl: 'success-pattern.mp3',
-    category: 'Bonus Reality Waves',
-    subtitle: 'Unlock your natural success patterns'
-  },
-  {
-    id: 'focus-field',
-    name: 'Focus Field Generator™',
-    duration: 420,
-    description: 'Generate laser-sharp focus instantly',
-    requiredTier: SubscriptionTier.PREMIUM,
-    audioUrl: 'focus-field.mp3',
-    category: 'Bonus Reality Waves',
-    subtitle: 'Achieve peak mental clarity'
-  },
-  {
-    id: 'sleep-wave',
-    name: 'Sleep Enhancement Wave™',
-    duration: 600,
-    description: 'Enhance your sleep quality naturally',
-    requiredTier: SubscriptionTier.PREMIUM,
-    audioUrl: 'sleep-wave.mp3',
-    category: 'Bonus Reality Waves',
-    subtitle: 'Experience deep, restorative sleep'
-  }
-];
 
 export const BonusPlayerScreen: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);

@@ -7,8 +7,7 @@ export interface UserMetrics {
 
 export interface SessionRecord {
   id: string;
-  date: string;
   trackId: string;
-  duration: number;
-  completed: boolean;
+  startTime: string;
+  type: 'regular' | 'bonus';
 }
