@@ -32,7 +32,7 @@ export const BonusPlayerScreen: React.FC = () => {
   const [selectedTrack, setSelectedTrack] = useState<AudioTrackAccess>(BONUS_TRACKS[0]);
   const [realityWaveGenerator] = useState(() => new RealityWaveGenerator());
   const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(BONUS_TRACKS[0].duration * 60); // Convert minutes to seconds
   const [isSeeking, setIsSeeking] = useState(false);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -63,9 +63,6 @@ export const BonusPlayerScreen: React.FC = () => {
 
   // Format time as mm:ss
   const formatTime = (seconds: number): string => {
-    if (!seconds || isNaN(seconds)) {
-      return '00:00';
-    }
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -78,20 +75,12 @@ export const BonusPlayerScreen: React.FC = () => {
       interval = setInterval(async () => {
         try {
           const currentPosition = await realityWaveGenerator.getCurrentPosition();
-          const totalDuration = await realityWaveGenerator.getDuration();
-          
-          if (totalDuration > 0) {
-            setProgress(currentPosition / totalDuration);
+          if (currentPosition >= 0) {
             setSessionTime(currentPosition);
-            setDuration(totalDuration);
-          } else {
-            setSessionTime(0);
-            setDuration(selectedTrack.duration);
+            setProgress(currentPosition / duration);
           }
         } catch (error) {
           console.error('Error updating progress:', error);
-          setSessionTime(0);
-          setDuration(selectedTrack.duration);
         }
       }, 1000);
     }
@@ -100,7 +89,7 @@ export const BonusPlayerScreen: React.FC = () => {
         clearInterval(interval);
       }
     };
-  }, [isPlaying, isSeeking, realityWaveGenerator, selectedTrack]);
+  }, [isPlaying, isSeeking, realityWaveGenerator, duration]);
 
   // Handle audio state changes
   const handlePlaybackStatusUpdate = useCallback(async (status: any) => {
@@ -108,16 +97,14 @@ export const BonusPlayerScreen: React.FC = () => {
       setIsPlaying(false);
       setSessionTime(0);
       setProgress(0);
-      
-      // Record completed bonus session
-      await metricsService.recordSession({
-        trackId: selectedTrack.id,
-        duration: selectedTrack.duration,
-        completed: true,
-        isBonus: true
-      });
+    } else if (status.isLoaded && status.durationMillis) {
+      const newDuration = status.durationMillis / 1000;
+      // Only update duration if it's significantly different
+      if (Math.abs(newDuration - duration) > 1) {
+        setDuration(newDuration);
+      }
     }
-  }, [selectedTrack]);
+  }, [duration]);
 
   useEffect(() => {
     realityWaveGenerator.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
@@ -126,14 +113,27 @@ export const BonusPlayerScreen: React.FC = () => {
     };
   }, [realityWaveGenerator, handlePlaybackStatusUpdate]);
 
-  const handleTrackPress = useCallback((track: AudioTrackAccess) => {
+  const handleTrackPress = useCallback(async (track: AudioTrackAccess) => {
     const locked = !featureAccess.hasAccessToTrack(track.id);
     if (locked) {
       showUpgradeDialog(track);
-    } else {
-      setSelectedTrack(track);
+      return;
     }
-  }, [showUpgradeDialog]);
+
+    try {
+      if (isPlaying) {
+        setIsPlaying(false);
+        await realityWaveGenerator.stopRealityWave();
+      }
+      setSelectedTrack(track);
+      setSessionTime(0);
+      setProgress(0);
+      // Initialize duration with track metadata
+      setDuration(track.duration * 60); // Convert minutes to seconds
+    } catch (error) {
+      console.error('Error selecting track:', error);
+    }
+  }, [isPlaying, realityWaveGenerator, showUpgradeDialog]);
 
   useEffect(() => {
     const checkSubscriptionAndReset = async () => {
@@ -151,10 +151,8 @@ export const BonusPlayerScreen: React.FC = () => {
     if (!selectedTrack) return;
 
     try {
-      if (isPlaying) {
-        await realityWaveGenerator.pauseRealityWave();
-        setIsPlaying(false);
-      } else {
+      setLoading(true);
+      if (!isPlaying) {
         const locked = !featureAccess.hasAccessToTrack(selectedTrack.id);
         if (locked) {
           showUpgradeDialog(selectedTrack);
@@ -164,10 +162,28 @@ export const BonusPlayerScreen: React.FC = () => {
         await realityWaveGenerator.startRealityWave(selectedTrack);
         setIsPlaying(true);
         metricsService.trackBonusSessionStart(selectedTrack.id);
+      } else {
+        await realityWaveGenerator.stopRealityWave();
+        setIsPlaying(false);
       }
     } catch (error) {
       console.error('Error toggling playback:', error);
       Alert.alert('Playback Error', 'There was an error playing this track. Please try again.');
+      setIsPlaying(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStop = async () => {
+    try {
+      await realityWaveGenerator.stopRealityWave();
+      setIsPlaying(false);
+      setSessionTime(0);
+      setProgress(0);
+      setDuration(0);
+    } catch (error) {
+      console.error('Error stopping playback:', error);
     }
   };
 
@@ -194,34 +210,36 @@ export const BonusPlayerScreen: React.FC = () => {
   // Initialize duration when track changes
   useEffect(() => {
     setSessionTime(0);
-    setDuration(selectedTrack.duration);
+    setDuration(selectedTrack.duration * 60); // Convert minutes to seconds
     setProgress(0);
   }, [selectedTrack]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      realityWaveGenerator.stopRealityWave();
+      if (isPlaying) {
+        realityWaveGenerator.stopRealityWave();
+      }
     };
-  }, [realityWaveGenerator]);
+  }, [isPlaying, realityWaveGenerator]);
 
   const handleSeek = useCallback(async (position: number) => {
     try {
       setIsSeeking(true);
       await realityWaveGenerator.seekTo(position);
       setSessionTime(position);
-      setProgress(position / selectedTrack.duration);
+      setProgress(position / duration);
     } catch (error) {
       console.error('Error seeking:', error);
     } finally {
       setIsSeeking(false);
     }
-  }, [realityWaveGenerator, selectedTrack.duration]);
+  }, [realityWaveGenerator, duration]);
 
   const handleSeeking = useCallback((value: number) => {
     setSessionTime(value);
-    setProgress(value / selectedTrack.duration);
-  }, [selectedTrack.duration]);
+    setProgress(value / duration);
+  }, [duration]);
 
   const renderTrackCard = useCallback((track: AudioTrackAccess) => {
     const locked = !featureAccess.hasAccessToTrack(track.id);
@@ -317,12 +335,13 @@ export const BonusPlayerScreen: React.FC = () => {
         <AudioControls
           isPlaying={isPlaying}
           onPlayPause={handlePlayPause}
-          progress={progress}
-          duration={duration}
-          currentTime={sessionTime}
           onSeek={handleSeek}
           onSeeking={handleSeeking}
-          loading={loading}
+          progress={progress}
+          position={sessionTime}
+          duration={duration}
+          disabled={!selectedTrack || loading}
+          audioPlayer={realityWaveGenerator}
         />
       </BlurView>
     </SafeAreaView>
