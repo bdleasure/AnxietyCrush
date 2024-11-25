@@ -207,10 +207,18 @@ export const SessionPlayer: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <View style={styles.header}>
+        <H1 style={styles.title}>Transform Now</H1>
+        <BodyMedium style={styles.subtitle}>Select your reality wave session</BodyMedium>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {Object.entries(groupedTracks).map(([category, tracks]) => (
           <View key={category} style={styles.categorySection}>
-            <H2 style={styles.categoryHeader}>{category}</H2>
             {tracks.map((track) => (
               <Card key={track.id} style={styles.trackCard}>
                 <TouchableOpacity
@@ -263,16 +271,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  header: {
+    paddingHorizontal: theme.spacing.screenPadding,
+    paddingTop: theme.spacing.screenPadding,
+    paddingBottom: theme.spacing.md,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xs,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.md,
+  },
   scrollView: {
     flex: 1,
   },
-  categorySection: {
-    paddingHorizontal: theme.spacing.screenPadding,
-    marginBottom: theme.spacing.sectionSpacing,
+  scrollContent: {
+    padding: theme.spacing.screenPadding,
+    paddingBottom: Platform.OS === 'ios' ? 180 : 160,
   },
-  categoryHeader: {
-    marginBottom: theme.spacing.md,
-    color: theme.colors.textPrimary,
+  categorySection: {
+    marginBottom: theme.spacing.sectionSpacing,
   },
   trackCard: {
     marginBottom: theme.spacing.md,
