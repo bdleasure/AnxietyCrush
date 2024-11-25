@@ -9,6 +9,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { ProgressScreen } from '../screens/ProgressScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { BonusVaultScreen } from '../screens/BonusVaultScreen';
+import { BonusPlayerScreen } from '../screens/BonusPlayerScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -79,7 +80,7 @@ export const MainNavigator = () => {
         />
         <Tab.Screen 
           name="Bonus" 
-          component={BonusVaultScreen}
+          component={BonusPlayerScreen}
           options={{
             tabBarIcon: ({ focused, color, size }) => (
               <Ionicons 
