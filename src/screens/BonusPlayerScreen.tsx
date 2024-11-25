@@ -24,6 +24,7 @@ import { BONUS_TRACKS } from '../constants/tracks';
 import { Card } from '../components/shared/Card';
 import { H1, H2, H3, BodyMedium, BodySmall, Label } from '../components/shared/Typography';
 import { Button } from '../components/shared/Button';
+import { getWebStyles } from '../theme/webStyles';
 
 const { width, height } = Dimensions.get('window');
 
@@ -43,6 +44,7 @@ export const BonusPlayerScreen: React.FC = () => {
   const [isSeeking, setIsSeeking] = useState(false);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const webStyles = getWebStyles();
 
   // Load initial track duration immediately
   useEffect(() => {
@@ -347,15 +349,15 @@ export const BonusPlayerScreen: React.FC = () => {
   }, [selectedTrack, isLocked, loading, showUpgradeDialog, navigation]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, webStyles.container]}>
       <View style={styles.header}>
         <H1 style={styles.title}>Bonus Sessions</H1>
         <BodyMedium style={styles.subtitle}>Enhance your transformation</BodyMedium>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+      <ScrollView 
+        style={[styles.scrollView, webStyles.scrollView]}
+        contentContainerStyle={[styles.scrollContent, webStyles.contentContainer]}
         showsVerticalScrollIndicator={false}
       >
         {BONUS_TRACKS.map((track) => (
@@ -365,7 +367,7 @@ export const BonusPlayerScreen: React.FC = () => {
         ))}
       </ScrollView>
 
-      <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
+      <BlurView intensity={100} style={[styles.audioControlsContainer, webStyles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
         <AudioControls
           audioPlayer={realityWaveGenerator}
           isPlaying={isPlaying}

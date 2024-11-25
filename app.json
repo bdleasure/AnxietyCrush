@@ -26,8 +26,21 @@
       "package": "com.anxietycrush.app"
     },
     "web": {
+      "bundler": "webpack",
       "favicon": "./assets/favicon.png",
-      "bundler": "webpack"
+      "name": "AnxietyCrush",
+      "shortName": "AnxietyCrush",
+      "lang": "en",
+      "themeColor": "#000000",
+      "backgroundColor": "#ffffff",
+      "viewport": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+      "config": {
+        "devServer": {
+          "client": {
+            "overlay": false
+          }
+        }
+      }
     },
     "plugins": [
       [

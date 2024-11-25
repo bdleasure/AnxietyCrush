@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { RealityWaveGenerator } from '../services/audio/RealityWaveGenerator';
 import { theme } from '../theme';
+import { getWebStyles } from '../theme/webStyles';
 import { BlurView } from 'expo-blur';
 import { featureAccess, AUDIO_TRACKS } from '../services/subscription/featureAccess';
 import { AudioTrackAccess, SubscriptionTier } from '../services/subscription/types';
@@ -42,6 +43,7 @@ export const SessionPlayer: React.FC = () => {
   const [isSeeking, setIsSeeking] = useState(false);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const webStyles = getWebStyles();
 
   // Load initial track duration immediately
   useEffect(() => {
@@ -293,15 +295,15 @@ export const SessionPlayer: React.FC = () => {
   }, {} as Record<string, AudioTrackAccess[]>);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, webStyles.container]}>
       <View style={styles.header}>
         <H1 style={styles.title}>Transform Now</H1>
         <BodyMedium style={styles.subtitle}>Select your reality wave session</BodyMedium>
       </View>
 
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        style={[styles.scrollView, webStyles.scrollView]}
+        contentContainerStyle={[styles.scrollContent, webStyles.contentContainer]}
         showsVerticalScrollIndicator={false}
       >
         {Object.entries(groupedTracks).map(([category, tracks]) => (
@@ -344,7 +346,7 @@ export const SessionPlayer: React.FC = () => {
         ))}
       </ScrollView>
 
-      <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
+      <BlurView intensity={100} style={[styles.audioControlsContainer, webStyles.player, { paddingBottom: insets.bottom + 60 }]}>
         <AudioControls
           audioPlayer={realityWaveGenerator}
           isPlaying={isPlaying}
