@@ -16,8 +16,9 @@ import { SubscriptionTier } from '../services/subscription/types';
 
 const { width } = Dimensions.get('window');
 
-interface PlanFeature {
+interface Feature {
   title: string;
+  subtitle: string;
   included: boolean;
 }
 
@@ -26,42 +27,141 @@ interface SubscriptionPlan {
   name: string;
   price: string;
   description: string;
-  features: PlanFeature[];
+  features: Feature[];
   popular?: boolean;
 }
 
 const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     tier: SubscriptionTier.PREMIUM,
-    name: 'Reality Wave™',
+    name: 'AnxietyCrush Reality System',
     price: '$39',
-    description: 'Transform anxiety with core reality-bending protocols',
+    description: 'Transform anxiety into reality-bending power with our revolutionary Reality Wave technology',
     features: [
-      { title: '11-Minute Anxiety Crusher™', included: true },
-      { title: '3-Minute Emergency Reset', included: true },
-      { title: '30-Minute Deep Programming', included: true },
-      { title: 'Reality Command Center', included: true },
-      { title: 'Progress Analytics', included: true },
-      { title: 'Pattern Recognition AI', included: true },
-      { title: 'Life Mastery Waves', included: true },
+      { 
+        title: '11-Minute Anxiety Crusher™',
+        subtitle: 'Primary Reality Wave',
+        included: true 
+      },
+      { 
+        title: '3-Minute Emergency Crush™',
+        subtitle: 'Instant Reset Protocol',
+        included: true 
+      },
+      { 
+        title: '30-Minute Deep Reality Programming™',
+        subtitle: 'Overnight Transformation',
+        included: true 
+      },
+      { 
+        title: 'Reality Command Center',
+        subtitle: 'Track Your Transformation',
+        included: true 
+      },
+      { 
+        title: 'Smart Onboarding Journey',
+        subtitle: '7-Day Anxiety Crushing Path',
+        included: true 
+      },
+      { 
+        title: 'Knowledge Center Access',
+        subtitle: 'Science of Reality Waves',
+        included: true 
+      },
+      { 
+        title: 'Pattern Recognition AI',
+        subtitle: 'Intelligent Progress Tracking',
+        included: true 
+      },
     ],
     popular: true,
   },
   {
-    tier: SubscriptionTier.FREE,
-    name: 'Free Trial',
-    price: '$0',
-    description: 'Experience the basics of anxiety control',
+    tier: SubscriptionTier.MASTER,
+    name: 'AnxietyCrush Master',
+    price: '$79',
+    description: 'Advanced mastery with situation-specific protocols and life transformation waves',
     features: [
-      { title: '11-Minute Anxiety Crusher™', included: true },
-      { title: '3-Minute Emergency Reset', included: true },
-      { title: '30-Minute Deep Programming', included: false },
-      { title: 'Reality Command Center', included: false },
-      { title: 'Progress Analytics', included: false },
-      { title: 'Pattern Recognition AI', included: false },
-      { title: 'Life Mastery Waves', included: false },
+      { 
+        title: 'All Reality System Features',
+        subtitle: 'Core Features Included',
+        included: true 
+      },
+      { 
+        title: 'Life Mastery Waves',
+        subtitle: 'Money, Relationships, Career & Health',
+        included: true 
+      },
+      { 
+        title: 'Situation Mastery Suite',
+        subtitle: 'Social, Speaking & Decision Power',
+        included: true 
+      },
+      { 
+        title: 'Custom Wave Lab',
+        subtitle: 'Personal Wave Builder',
+        included: true 
+      },
+      { 
+        title: 'Advanced Analytics',
+        subtitle: 'Deep Pattern AI & Success Prediction',
+        included: true 
+      },
+      { 
+        title: 'Deep Transformation',
+        subtitle: 'Fear to Power Protocols',
+        included: true 
+      },
+      { 
+        title: 'Daily Power System',
+        subtitle: 'Morning, Day & Evening Optimization',
+        included: false 
+      },
     ],
-  }
+  },
+  {
+    tier: SubscriptionTier.OPTIMIZER,
+    name: 'Daily Reality Optimizer',
+    price: '$29',
+    description: 'Daily power routines for consistent reality control and anxiety mastery',
+    features: [
+      { 
+        title: 'Morning Reality Field',
+        subtitle: 'Start Strong Protocol',
+        included: true 
+      },
+      { 
+        title: 'Daytime Control Suite',
+        subtitle: 'Reality Checks & Pattern Interrupts',
+        included: true 
+      },
+      { 
+        title: 'Evening Integration',
+        subtitle: 'Sleep Field & Reality Mapping',
+        included: true 
+      },
+      { 
+        title: 'Quick Reality Checks',
+        subtitle: 'Instant Resets',
+        included: true 
+      },
+      { 
+        title: 'Pattern Interrupts',
+        subtitle: 'Instant Anxiety Control',
+        included: true 
+      },
+      { 
+        title: 'Success Amplifiers',
+        subtitle: 'Daily Power Boosters',
+        included: true 
+      },
+      { 
+        title: 'Advanced Features',
+        subtitle: 'Master System Tools',
+        included: true 
+      },
+    ],
+  },
 ];
 
 interface PlanCardProps {
@@ -106,7 +206,10 @@ const PlanCard = memo(({ plan, isSelected, onSelect, onUpgrade }: PlanCardProps)
                 color={feature.included ? colors.accent : colors.textSecondary}
                 style={styles.featureIcon}
               />
-              <Text style={styles.featureText}>{feature.title}</Text>
+              <View style={styles.featureTextContainer}>
+                <Text style={styles.featureTitle}>{feature.title}</Text>
+                <Text style={styles.featureSubtitle}>{feature.subtitle}</Text>
+              </View>
             </View>
           ))}
         </View>
@@ -116,7 +219,7 @@ const PlanCard = memo(({ plan, isSelected, onSelect, onUpgrade }: PlanCardProps)
           onPress={() => onUpgrade(plan)}
         >
           <Text style={styles.upgradeButtonText}>
-            {isSelected ? 'Confirm Selection' : 'Select Plan'}
+            {isSelected ? 'Start Your Reality Shift' : 'Select Plan'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -186,13 +289,13 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 20 : 40,
   },
   title: {
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: 'bold',
     color: colors.textPrimary,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 10,
     color: colors.textSecondary,
   },
   scrollView: {
@@ -229,31 +332,34 @@ const styles = StyleSheet.create({
     top: 12,
     right: 12,
     backgroundColor: colors.accent,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    zIndex: 1,
   },
   popularText: {
     color: colors.textPrimary,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
   },
   planHeader: {
     marginBottom: 12,
+    marginTop: 24,
   },
   planName: {
-    fontSize: 19,
+    fontSize: 14,
     fontWeight: 'bold',
     color: colors.textPrimary,
     marginBottom: 4,
+    marginTop: 8,
   },
   planPrice: {
-    fontSize: 26,
+    fontSize: 19,
     fontWeight: 'bold',
     color: colors.textPrimary,
   },
   planDescription: {
-    fontSize: 11,
+    fontSize: 9,
     color: colors.textSecondary,
     marginBottom: 20,
   },
@@ -268,10 +374,19 @@ const styles = StyleSheet.create({
   featureIcon: {
     marginRight: 8,
   },
-  featureText: {
-    fontSize: 11,
-    color: colors.textPrimary,
+  featureTextContainer: {
     flex: 1,
+    marginLeft: 12,
+  },
+  featureTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  featureSubtitle: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   upgradeButton: {
     backgroundColor: colors.cardBackground,
@@ -286,7 +401,7 @@ const styles = StyleSheet.create({
   },
   upgradeButtonText: {
     color: colors.textPrimary,
-    fontSize: 13,
+    fontSize: 10,
     fontWeight: 'bold',
   },
   guaranteeSection: {
@@ -297,14 +412,14 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   guaranteeText: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: 'bold',
     color: colors.textPrimary,
     marginTop: 12,
     marginBottom: 8,
   },
   guaranteeDescription: {
-    fontSize: 11,
+    fontSize: 9,
     color: colors.textSecondary,
     textAlign: 'center',
   },

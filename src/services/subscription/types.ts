@@ -1,6 +1,8 @@
 export enum SubscriptionTier {
   FREE = 'Free',
   PREMIUM = 'Premium',
+  MASTER = 'Master',
+  OPTIMIZER = 'Optimizer'
 }
 
 export interface Feature {
