@@ -30,13 +30,22 @@ export const SessionPlayer: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [selectedTrack, setSelectedTrack] = useState<AudioTrackAccess>(AUDIO_TRACKS[0]);
+  const [selectedTrack, setSelectedTrack] = useState<AudioTrackAccess>(() => {
+    // Find the first unlocked track
+    const firstUnlockedTrack = AUDIO_TRACKS.find(track => featureAccess.hasAccessToTrack(track.id));
+    return firstUnlockedTrack || AUDIO_TRACKS[0];
+  });
   const [realityWaveGenerator] = useState(() => new RealityWaveGenerator());
   const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(AUDIO_TRACKS[0].duration * 60); // Convert minutes to seconds
+  const [duration, setDuration] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+
+  // Set initial duration when component mounts
+  useEffect(() => {
+    setDuration(selectedTrack.duration * 60);
+  }, []);
 
   // Get available tracks based on user's subscription
   const availableTracks = featureAccess.getAvailableTracks();
@@ -220,11 +229,25 @@ export const SessionPlayer: React.FC = () => {
         {Object.entries(groupedTracks).map(([category, tracks]) => (
           <View key={category} style={styles.categorySection}>
             {tracks.map((track) => (
-              <Card key={track.id} style={styles.trackCard}>
+              <Card 
+                key={track.id} 
+                style={styles.trackCard}
+                isSelected={selectedTrack.id === track.id}
+              >
                 <TouchableOpacity
                   onPress={() => handleTrackPress(track)}
                   style={styles.trackButton}
                 >
+                  {isLocked(track) && (
+                    <View style={styles.unlockContainer}>
+                      <Button
+                        label="Unlock"
+                        size="small"
+                        onPress={() => navigation.navigate('Upgrade')}
+                        style={styles.unlockButton}
+                      />
+                    </View>
+                  )}
                   <View style={styles.trackInfo}>
                     <H3 style={styles.trackTitle}>{track.name}</H3>
                     <BodySmall style={styles.trackDuration}>
@@ -234,14 +257,6 @@ export const SessionPlayer: React.FC = () => {
                       {track.description}
                     </BodyMedium>
                   </View>
-                  {isLocked(track) && (
-                    <Button
-                      label="Unlock"
-                      size="small"
-                      onPress={() => navigation.navigate('Upgrade')}
-                      style={styles.unlockButton}
-                    />
-                  )}
                 </TouchableOpacity>
               </Card>
             ))}
@@ -296,18 +311,26 @@ const styles = StyleSheet.create({
   },
   categorySection: {
     marginBottom: theme.spacing.sectionSpacing,
+    paddingHorizontal: theme.spacing.xs,
   },
   trackCard: {
     marginBottom: theme.spacing.md,
   },
   trackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    position: 'relative',
+  },
+  unlockContainer: {
+    position: 'absolute',
+    top: -theme.spacing.sm,
+    right: 0,
+    zIndex: 1,
+  },
+  unlockButton: {
+    minWidth: 80,
   },
   trackInfo: {
     flex: 1,
-    marginRight: theme.spacing.md,
+    paddingTop: theme.spacing.lg,
   },
   trackTitle: {
     marginBottom: theme.spacing.xxs,
@@ -319,9 +342,6 @@ const styles = StyleSheet.create({
   },
   trackDescription: {
     color: theme.colors.textSecondary,
-  },
-  unlockButton: {
-    minWidth: 80,
   },
   audioControlsContainer: {
     position: 'absolute',

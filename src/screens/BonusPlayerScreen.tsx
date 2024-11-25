@@ -31,13 +31,22 @@ export const BonusPlayerScreen: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [selectedTrack, setSelectedTrack] = useState<AudioTrackAccess>(BONUS_TRACKS[0]);
+  const [selectedTrack, setSelectedTrack] = useState<AudioTrackAccess>(() => {
+    // Find the first unlocked track
+    const firstUnlockedTrack = BONUS_TRACKS.find(track => featureAccess.hasAccessToTrack(track.id));
+    return firstUnlockedTrack || BONUS_TRACKS[0];
+  });
   const [realityWaveGenerator] = useState(() => new RealityWaveGenerator());
   const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(BONUS_TRACKS[0].duration * 60); // Convert minutes to seconds
+  const [duration, setDuration] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+
+  // Set initial duration when component mounts
+  useEffect(() => {
+    setDuration(selectedTrack.duration * 60);
+  }, []);
 
   // Check if a track is locked based on subscription tier
   const isLocked = useCallback((track: AudioTrackAccess) => {
@@ -233,32 +242,44 @@ export const BonusPlayerScreen: React.FC = () => {
     const isSelected = selectedTrack?.id === track.id;
     
     return (
-      <Card key={track.id} style={styles.trackCard}>
+      <Card key={track.id} style={styles.trackCard} isSelected={isSelected}>
         <TouchableOpacity
-          onPress={() => handleTrackPress(track)}
+          onPress={() => {
+            if (!isLocked(track)) {
+              setSelectedTrack(track);
+              setSessionTime(0);
+              setProgress(0);
+              setDuration(track.duration * 60);
+            } else {
+              showUpgradeDialog(track);
+            }
+          }}
           style={styles.trackButton}
+          disabled={loading}
         >
+          {isLocked(track) && (
+            <View style={styles.unlockContainer}>
+              <Button
+                label="Unlock"
+                size="small"
+                onPress={() => navigation.navigate('Upgrade')}
+                style={styles.unlockButton}
+              />
+            </View>
+          )}
           <View style={styles.trackInfo}>
             <H3 style={styles.trackTitle}>{track.name}</H3>
             <BodySmall style={styles.trackDuration}>
               {track.duration} minutes
             </BodySmall>
             <BodyMedium style={styles.trackDescription}>
-              {locked ? `Unlock with ${track.requiredTier} Package` : track.description}
+              {track.description}
             </BodyMedium>
           </View>
-          {locked && (
-            <Button
-              label="Unlock"
-              size="small"
-              onPress={() => navigation.navigate('Upgrade')}
-              style={styles.unlockButton}
-            />
-          )}
         </TouchableOpacity>
       </Card>
     );
-  }, [selectedTrack, handleTrackPress, navigation]);
+  }, [selectedTrack, isLocked, loading, showUpgradeDialog, navigation]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -272,13 +293,11 @@ export const BonusPlayerScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.sessionsContainer}>
-          {BONUS_TRACKS.map((track) => (
-            <View key={track.id}>
-              {renderTrackCard(track)}
-            </View>
-          ))}
-        </View>
+        {BONUS_TRACKS.map((track) => (
+          <View key={track.id}>
+            {renderTrackCard(track)}
+          </View>
+        ))}
       </ScrollView>
 
       <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
@@ -315,15 +334,23 @@ const styles = StyleSheet.create({
   },
   trackCard: {
     marginBottom: theme.spacing.md,
+    marginHorizontal: theme.spacing.xs,
   },
   trackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    position: 'relative',
+  },
+  unlockContainer: {
+    position: 'absolute',
+    top: -theme.spacing.sm,
+    right: 0,
+    zIndex: 1,
+  },
+  unlockButton: {
+    minWidth: 80,
   },
   trackInfo: {
     flex: 1,
-    marginRight: theme.spacing.md,
+    paddingTop: theme.spacing.lg,
   },
   trackTitle: {
     marginBottom: theme.spacing.xxs,
@@ -335,9 +362,6 @@ const styles = StyleSheet.create({
   },
   trackDescription: {
     color: theme.colors.textSecondary,
-  },
-  unlockButton: {
-    minWidth: 80,
   },
   audioControlsContainer: {
     position: 'absolute',
