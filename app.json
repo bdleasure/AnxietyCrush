@@ -26,7 +26,8 @@
       "package": "com.anxietycrush.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "webpack"
     },
     "plugins": [
       [

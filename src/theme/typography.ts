@@ -1,7 +1,7 @@
 import { Dimensions } from 'react-native';
 
 const { width } = Dimensions.get('window');
-const FONT_SCALE = width / 375; // Base width of 375 for iPhone 8
+const FONT_SCALE = width / 375 * 0.8; // Reduced by 20%
 
 export const typography = {
   // Headings
