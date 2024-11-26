@@ -4,11 +4,8 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { SessionPlayer } from '../screens/SessionPlayer';
-import { ProfileScreen } from '../screens/ProfileScreen';
-import { ProgressScreen } from '../screens/ProgressScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
-import { BonusPlayerScreen } from '../screens/BonusPlayerScreen';
+import { withLazyLoading } from '../utils/lazyLoad';
+import SessionPlayer from '../screens/SessionPlayer';  // Direct import for initial screen
 
 const Tab = createBottomTabNavigator();
 
@@ -38,6 +35,12 @@ const TAB_ICON = {
 const TabBarBackground = () => (
   <BlurView tint="dark" intensity={100} style={StyleSheet.absoluteFill} />
 );
+
+// Lazy load non-initial screens
+const ProfileScreen = withLazyLoading(() => import('../screens/ProfileScreen'));  // Uses default export
+const ProgressScreen = withLazyLoading(() => import('../screens/ProgressScreen'));  // Uses default export
+const SettingsScreen = withLazyLoading(() => import('../screens/SettingsScreen'));  // Uses default export
+const BonusPlayerScreen = withLazyLoading(() => import('../screens/BonusPlayerScreen'));  // Uses default export
 
 export const MainNavigator = () => {
   return (

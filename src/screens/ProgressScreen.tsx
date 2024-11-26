@@ -11,7 +11,7 @@ import { BlurView } from 'expo-blur';
 
 const { width } = Dimensions.get('window');
 
-export const ProgressScreen = () => {
+const ProgressScreen = () => {
   const navigation = useNavigation();
   const [metrics, setMetrics] = useState<UserMetrics>({
     sessionsCompleted: 0,
@@ -245,3 +245,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
+
+export default ProgressScreen;

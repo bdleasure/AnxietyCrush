@@ -50,7 +50,7 @@ const SLIDES: OnboardingSlide[] = [
   },
 ];
 
-export const OnboardingScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+const OnboardingScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const animationValue = useRef(new Animated.Value(1)).current;
@@ -294,3 +294,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
+
+export default OnboardingScreen;

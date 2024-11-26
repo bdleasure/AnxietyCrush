@@ -227,7 +227,7 @@ const PlanCard = memo(({ plan, isSelected, onSelect, onUpgrade }: PlanCardProps)
   );
 });
 
-export const UpgradeScreen: React.FC = () => {
+const UpgradeScreen: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionTier | null>(null);
 
   const handleUpgrade = useCallback((plan: SubscriptionPlan) => {
@@ -424,3 +424,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+export default UpgradeScreen;

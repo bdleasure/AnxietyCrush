@@ -20,7 +20,7 @@ import { formatDuration } from '../utils/timeUtils';
 
 interface Props {}
 
-export const ProfileScreen: React.FC<Props> = () => {
+const ProfileScreen: React.FC<Props> = () => {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [metrics, setMetrics] = useState({
     totalListeningTime: 0,
@@ -253,3 +253,5 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 });
+
+export default ProfileScreen;

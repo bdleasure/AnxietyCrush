@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, ViewStyle, Platform, Animated } from 'react-native';
+import React, { memo } from 'react';
+import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../theme/colors';
 import { shadows } from '../../theme/shadows';
@@ -11,33 +11,36 @@ interface CardProps {
   isSelected?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({ children, style, isSelected = false }) => {
-  if (!isSelected) {
-    return (
-      <View style={[styles.card, styles.cardMargins, style]}>
-        <View style={styles.innerCard}>
-          {children}
-        </View>
-      </View>
-    );
-  }
+const UnselectedCard = memo(({ children, style }: Omit<CardProps, 'isSelected'>) => (
+  <View style={[styles.card, styles.cardMargins, style]}>
+    <View style={styles.innerCard}>
+      {children}
+    </View>
+  </View>
+));
 
-  return (
-    <View style={[styles.cardContainer, styles.cardMargins]}>
-      <LinearGradient
-        colors={[colors.accent, '#EC4899']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientBorder}
-      />
-      <View style={[styles.card, style]}>
-        <View style={styles.innerCard}>
-          {children}
-        </View>
+const SelectedCard = memo(({ children, style }: Omit<CardProps, 'isSelected'>) => (
+  <View style={[styles.cardContainer, styles.cardMargins]}>
+    <LinearGradient
+      colors={[colors.accent, '#EC4899']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradientBorder}
+    />
+    <View style={[styles.card, style]}>
+      <View style={styles.innerCard}>
+        {children}
       </View>
     </View>
-  );
-};
+  </View>
+));
+
+export const Card = memo(({ children, style, isSelected = false }: CardProps) => {
+  if (!isSelected) {
+    return <UnselectedCard style={style}>{children}</UnselectedCard>;
+  }
+  return <SelectedCard style={style}>{children}</SelectedCard>;
+});
 
 const styles = StyleSheet.create({
   cardContainer: {

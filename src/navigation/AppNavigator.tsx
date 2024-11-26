@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
-import { MainNavigator } from './MainNavigator';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from '../theme/colors';
-import { UpgradeScreen } from '../screens/UpgradeScreen';
+import { MainNavigator } from './MainNavigator';
+import { withLazyLoading } from '../utils/lazyLoad';
 
 const Stack = createNativeStackNavigator();
 const ONBOARDING_COMPLETE_KEY = '@anxiety_crush:onboarding_complete';
+
+// Lazy load screens
+const OnboardingScreen = withLazyLoading(() => import('../screens/onboarding/OnboardingScreen'));
+const UpgradeScreen = withLazyLoading(() => import('../screens/UpgradeScreen'));
 
 // For development - set this to true to always show onboarding
 const FORCE_ONBOARDING = true;

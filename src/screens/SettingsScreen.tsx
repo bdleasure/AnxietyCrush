@@ -62,7 +62,7 @@ const QualitySelector: React.FC<{
   </View>
 );
 
-export const SettingsScreen = () => {
+const SettingsScreen = () => {
   const { settings, updateSetting, resetSettings } = useSettings();
   const [showTimePicker, setShowTimePicker] = React.useState(false);
 
@@ -293,3 +293,5 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 });
+
+export default SettingsScreen;
