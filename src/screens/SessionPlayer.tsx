@@ -7,11 +7,10 @@ import {
   ScrollView,
   Dimensions,
   ActivityIndicator,
-  SafeAreaView,
-  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { RealityWaveGenerator } from '../services/audio/RealityWaveGenerator';
-import { theme } from '../theme';
+import { colors } from '../theme/colors';
 import { BlurView } from 'expo-blur';
 import { featureAccess, AUDIO_TRACKS } from '../services/subscription/featureAccess';
 import { AudioTrackAccess, SubscriptionTier } from '../services/subscription/types';
@@ -98,224 +97,133 @@ const SessionPlayer: React.FC = () => {
     }
   }, []); // Remove trackDurations dependency to prevent infinite loop
 
-  // Load initial track duration immediately
+  // Load track duration when track changes
   useEffect(() => {
     let mounted = true;
     
-    const loadInitialDuration = async () => {
+    const loadTrackDuration = async () => {
       if (!selectedTrack) return;
       
       try {
-        const durations = await loadTrackDurations([selectedTrack]);
-        if (!mounted) return;
+        setLoading(true);
+        const tempGenerator = new RealityWaveGenerator();
+        await tempGenerator.startRealityWave(selectedTrack, false);
+        const duration = await tempGenerator.getDuration();
+        await tempGenerator.stopRealityWave();
         
-        setTrackDurations(durations);
-        if (durations[selectedTrack.id]) {
-          setDuration(durations[selectedTrack.id]);
-        }
-      } finally {
         if (mounted) {
+          setDuration(duration);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error loading track duration:', error);
+        if (mounted) {
+          setDuration(selectedTrack.duration * 60); // Fallback to metadata duration
           setLoading(false);
         }
       }
     };
 
-    loadInitialDuration();
-    return () => { mounted = false; };
-  }, [selectedTrack, loadTrackDurations]);
-
-  // Load remaining track durations after initial load
-  useEffect(() => {
-    if (loading) return;
-    
-    let mounted = true;
-    const loadRemainingDurations = async () => {
-      const remainingTracks = AUDIO_TRACKS.filter(track => track.id !== selectedTrack?.id);
-      try {
-        const durations = await loadTrackDurations(remainingTracks);
-        if (mounted) {
-          setTrackDurations(prev => ({ ...prev, ...durations }));
-        }
-      } catch (error) {
-        console.error('Error loading remaining durations:', error);
-      }
-    };
-
-    loadRemainingDurations();
-    return () => { mounted = false; };
-  }, [loading, selectedTrack?.id, loadTrackDurations]);
-
-  // Update progress with requestAnimationFrame for smoother updates
-  useEffect(() => {
-    if (!isPlaying || isSeeking) return;
-    
-    let mounted = true;
-    let animationFrame: number;
-    
-    const updateProgress = async () => {
-      try {
-        const currentPosition = await realityWaveGenerator.getCurrentPosition();
-        if (!mounted) return;
-        
-        if (currentPosition >= 0) {
-          setSessionTime(currentPosition);
-          setProgress(currentPosition / duration);
-        }
-        
-        if (mounted && isPlaying && !isSeeking) {
-          animationFrame = requestAnimationFrame(updateProgress);
-        }
-      } catch (error) {
-        console.error('Error updating progress:', error);
-      }
-    };
-
-    animationFrame = requestAnimationFrame(updateProgress);
-    
+    loadTrackDuration();
     return () => {
       mounted = false;
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
     };
-  }, [isPlaying, isSeeking, duration]);
+  }, [selectedTrack]);
 
-  // Handle track selection with proper cleanup
-  const handleTrackPress = useCallback(async (track: AudioTrackAccess) => {
-    if (isLocked(track)) {
-      navigation.navigate('Upgrade');
+  // Update playback status
+  useEffect(() => {
+    realityWaveGenerator.setOnPlaybackStatusUpdate((status) => {
+      if (status.isLoaded) {
+        setProgress(status.positionMillis / (status.durationMillis || 1));
+        setSessionTime(Math.floor(status.positionMillis / 1000));
+        setDuration(Math.floor(status.durationMillis / 1000));
+        setIsPlaying(status.isPlaying);
+        
+        // Handle track completion
+        if (status.didJustFinish) {
+          setIsPlaying(false);
+          setProgress(0);
+          setSessionTime(0);
+          
+          // Record completed session
+          if (selectedTrack && sessionTime > 10) {
+            metricsService.recordSession({
+              trackId: selectedTrack.id,
+              duration: sessionTime,
+              completed: true,
+            });
+          }
+        }
+      }
+    });
+
+    return () => {
+      realityWaveGenerator.setOnPlaybackStatusUpdate(null);
+    };
+  }, [selectedTrack]);
+
+  // Handle track selection
+  const handleTrackSelect = useCallback(async (track: AudioTrackAccess) => {
+    if (!featureAccess.hasAccessToTrack(track.id)) {
+      showUpgradeDialog(track);
       return;
     }
 
     try {
       setLoading(true);
+      setSelectedTrack(track);
+      setProgress(0);
+      setSessionTime(0);
       
+      // Stop current playback if playing
       if (isPlaying) {
         await realityWaveGenerator.stopRealityWave();
         setIsPlaying(false);
       }
 
-      setSelectedTrack(track);
-      setSessionTime(0);
-      setProgress(0);
-      
-      if (trackDurations[track.id]) {
-        setDuration(trackDurations[track.id]);
-        setLoading(false);
-      } else {
-        try {
-          const durations = await loadTrackDurations([track]);
-          setTrackDurations(prev => ({ ...prev, ...durations }));
-          if (durations[track.id]) {
-            setDuration(durations[track.id]);
-          }
-        } catch (error) {
-          console.error('Error loading track duration:', error);
-          setDuration(track.duration * 60);
-        } finally {
-          setLoading(false);
-        }
-      }
+      // Load the track without playing
+      await realityWaveGenerator.startRealityWave(track, false);
+      const duration = await realityWaveGenerator.getDuration();
+      setDuration(duration);
+      setLoading(false);
     } catch (error) {
-      console.error('Error changing track:', error);
+      console.error('Error selecting track:', error);
+      Alert.alert('Error', 'Failed to load the selected track. Please try again.');
       setLoading(false);
     }
-  }, [isPlaying, trackDurations, loadTrackDurations, navigation]);
-
-  // Check if a track is locked (memoized)
-  const isLocked = useCallback((track: AudioTrackAccess) => {
-    return !featureAccess.hasAccessToTrack(track.id);
-  }, []);
+  }, [isPlaying]);
 
   // Handle play/pause
   const handlePlayPause = useCallback(async () => {
+    if (!selectedTrack) return;
+
     try {
       if (!isPlaying) {
-        await realityWaveGenerator.startRealityWave(selectedTrack, false);
+        await realityWaveGenerator.startRealityWave(selectedTrack, true);
         setIsPlaying(true);
       } else {
         await realityWaveGenerator.pauseRealityWave();
         setIsPlaying(false);
-
-        // Record any session with meaningful progress (>10 seconds)
-        if (sessionTime > 10) {
-          const sessionRecord = {
-            id: `${selectedTrack.id}_${Date.now()}`,
-            trackId: selectedTrack.id,
-            startTime: new Date().toISOString(),
-            duration: sessionTime,
-            type: selectedTrack.type || 'regular',
-            completed: progress >= 0.99,
-          };
-          await metricsService.recordSession(sessionRecord);
-        }
       }
     } catch (error) {
-      console.error('Error playing/pausing audio:', error);
+      console.error('Error toggling playback:', error);
+      Alert.alert('Playback Error', 'Failed to play/pause the track. Please try again.');
     }
-  }, [isPlaying, realityWaveGenerator, selectedTrack, progress, sessionTime]);
+  }, [isPlaying, selectedTrack]);
 
-  // Handle session completion
-  useEffect(() => {
-    if (progress >= 0.99 && isPlaying) {
-      const completeSession = async () => {
-        try {
-          await realityWaveGenerator.pauseRealityWave();
-          setIsPlaying(false);
-
-          const sessionRecord = {
-            id: `${selectedTrack.id}_${Date.now()}`,
-            trackId: selectedTrack.id,
-            startTime: new Date().toISOString(),
-            duration: sessionTime,
-            type: selectedTrack.type || 'regular',
-            completed: true,
-          };
-          await metricsService.recordSession(sessionRecord);
-        } catch (error) {
-          console.error('Error completing session:', error);
-        }
-      };
-      completeSession();
+  // Handle seeking
+  const handleSeek = useCallback(async (position: number) => {
+    try {
+      await realityWaveGenerator.seekTo(position);
+    } catch (error) {
+      console.error('Error seeking:', error);
     }
-  }, [progress, isPlaying, selectedTrack, sessionTime]);
+  }, []);
 
-  // Handle track completion and auto-play
-  const handleTrackComplete = useCallback(async () => {
-    if (settings.autoPlayEnabled) {
-      // Find the next track in the available tracks list
-      const currentIndex = availableTracks.findIndex(track => track.id === selectedTrack.id);
-      const nextTrack = availableTracks[currentIndex + 1];
-      
-      if (nextTrack) {
-        setSelectedTrack(nextTrack);
-        await realityWaveGenerator.startRealityWave(nextTrack, true);
-        setIsPlaying(true);
-      } else {
-        setIsPlaying(false);
-      }
-    } else {
-      setIsPlaying(false);
-    }
-  }, [settings.autoPlayEnabled, selectedTrack, availableTracks]);
-
-  // Update playback status
-  const handlePlaybackStatusUpdate = useCallback(
-    async (status: any) => {
-      if (!status.isLoaded) return;
-
-      if (!isSeeking) {
-        setProgress(status.positionMillis / 1000);
-        setSessionTime(status.positionMillis / 1000);
-      }
-
-      // Check if track has completed
-      if (status.didJustFinish) {
-        handleTrackComplete();
-      }
-    },
-    [isSeeking, handleTrackComplete]
-  );
+  const handleSeeking = useCallback((position: number) => {
+    setSessionTime(position);
+    setProgress(position / duration);
+  }, [duration]);
 
   // Show upgrade dialog
   const showUpgradeDialog = useCallback((track: AudioTrackAccess) => {
@@ -331,34 +239,6 @@ const SessionPlayer: React.FC = () => {
       ]
     );
   }, [navigation]);
-
-  // Handle seek
-  const handleSeek = useCallback(async (position: number) => {
-    try {
-      setIsSeeking(true);
-      await realityWaveGenerator.seekTo(position);
-      setSessionTime(position);
-      setProgress(position / duration);
-    } catch (error) {
-      console.error('Error seeking:', error);
-    } finally {
-      setIsSeeking(false);
-    }
-  }, [realityWaveGenerator, duration]);
-
-  const handleSeeking = useCallback((value: number) => {
-    setSessionTime(value);
-    setProgress(value / duration);
-  }, [duration]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (isPlaying) {
-        realityWaveGenerator?.pauseRealityWave();
-      }
-    };
-  }, [isPlaying, realityWaveGenerator]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -381,10 +261,10 @@ const SessionPlayer: React.FC = () => {
                 isSelected={selectedTrack.id === track.id}
               >
                 <TouchableOpacity
-                  onPress={() => handleTrackPress(track)}
+                  onPress={() => handleTrackSelect(track)}
                   style={styles.trackButton}
                 >
-                  {isLocked(track) && (
+                  {!featureAccess.hasAccessToTrack(track.id) && (
                     <View style={styles.unlockContainer}>
                       <Button
                         label="Unlock"
@@ -397,8 +277,8 @@ const SessionPlayer: React.FC = () => {
                   <View style={styles.trackInfo}>
                     <H3 style={styles.trackTitle}>{track.name}</H3>
                     <BodySmall style={styles.trackDuration}>
-                      {trackDurations[track.id] ? 
-                        `${Math.floor(trackDurations[track.id] / 60)} minutes ${Math.floor(trackDurations[track.id] % 60)} seconds` :
+                      {duration ? 
+                        `${Math.floor(duration / 60)} minutes ${Math.floor(duration % 60)} seconds` :
                         `${track.duration} minutes`}
                     </BodySmall>
                     <BodyMedium style={styles.trackDescription}>
@@ -423,7 +303,6 @@ const SessionPlayer: React.FC = () => {
           position={sessionTime}
           duration={duration}
           loading={loading}
-          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
         />
       </BlurView>
     </SafeAreaView>
@@ -433,44 +312,44 @@ const SessionPlayer: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: theme.spacing.screenPadding,
-    paddingTop: theme.spacing.screenPadding,
-    paddingBottom: theme.spacing.md,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.xs,
+    color: colors.textPrimary,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.md,
+    color: colors.textSecondary,
+    marginBottom: 16,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: theme.spacing.screenPadding,
-    paddingBottom: Platform.OS === 'ios' ? 180 : 160,
+    padding: 24,
+    paddingBottom: 180,
   },
   categorySection: {
-    marginBottom: theme.spacing.sectionSpacing,
-    paddingHorizontal: theme.spacing.xs,
+    marginBottom: 16,
+    paddingHorizontal: 8,
   },
   trackCard: {
-    marginBottom: theme.spacing.md,
+    marginBottom: 16,
   },
   trackButton: {
     position: 'relative',
   },
   unlockContainer: {
     position: 'absolute',
-    top: -theme.spacing.sm,
+    top: -8,
     right: 0,
     zIndex: 1,
   },
@@ -479,26 +358,26 @@ const styles = StyleSheet.create({
   },
   trackInfo: {
     flex: 1,
-    paddingTop: theme.spacing.lg,
+    paddingTop: 16,
   },
   trackTitle: {
-    marginBottom: theme.spacing.xxs,
-    color: theme.colors.textPrimary,
+    marginBottom: 4,
+    color: colors.textPrimary,
   },
   trackDuration: {
-    color: theme.colors.accent,
-    marginBottom: theme.spacing.xs,
+    color: colors.accent,
+    marginBottom: 8,
   },
   trackDescription: {
-    color: theme.colors.textSecondary,
+    color: colors.textSecondary,
   },
   audioControlsContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: theme.colors.background,
-    paddingTop: theme.spacing.md,
+    backgroundColor: colors.background,
+    paddingTop: 16,
     zIndex: 2,
   },
 });
