@@ -2,36 +2,24 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface Settings {
-  // Audio Preferences
-  backgroundSoundsEnabled: boolean;
-  notificationSoundsEnabled: boolean;
-  downloadQuality: 'high' | 'medium' | 'low';
+  // Playback
   autoPlayEnabled: boolean;
 
-  // Notification Settings
+  // Notifications
   dailyReminderTime: string | null; // HH:mm format
-  streakAlertsEnabled: boolean;
   achievementNotificationsEnabled: boolean;
-  progressUpdatesEnabled: boolean;
 
-  // App Customization
+  // Appearance & Feel
   theme: 'dark' | 'darker';
   hapticFeedbackEnabled: boolean;
-  animationIntensity: 'high' | 'medium' | 'low';
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  backgroundSoundsEnabled: true,
-  notificationSoundsEnabled: true,
-  downloadQuality: 'high',
   autoPlayEnabled: false,
   dailyReminderTime: '09:00',
-  streakAlertsEnabled: true,
   achievementNotificationsEnabled: true,
-  progressUpdatesEnabled: true,
   theme: 'dark',
   hapticFeedbackEnabled: true,
-  animationIntensity: 'medium',
 };
 
 interface SettingsContextType {

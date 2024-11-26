@@ -23,6 +23,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Card } from '../components/shared/Card';
 import { H1, H2, H3, BodyMedium, BodySmall, Label } from '../components/shared/Typography';
 import { Button } from '../components/shared/Button';
+import { useSettings } from '../contexts/SettingsContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -36,6 +37,7 @@ const { availableTracks, lockedTracks } = (() => ({
 const initialTrack = availableTracks[0] || AUDIO_TRACKS[0];
 
 const SessionPlayer: React.FC = () => {
+  const { settings } = useSettings();
   const [isPlaying, setIsPlaying] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -278,6 +280,43 @@ const SessionPlayer: React.FC = () => {
     }
   }, [progress, isPlaying, selectedTrack, sessionTime]);
 
+  // Handle track completion and auto-play
+  const handleTrackComplete = useCallback(async () => {
+    if (settings.autoPlayEnabled) {
+      // Find the next track in the available tracks list
+      const currentIndex = availableTracks.findIndex(track => track.id === selectedTrack.id);
+      const nextTrack = availableTracks[currentIndex + 1];
+      
+      if (nextTrack) {
+        setSelectedTrack(nextTrack);
+        await realityWaveGenerator.startRealityWave(nextTrack, true);
+        setIsPlaying(true);
+      } else {
+        setIsPlaying(false);
+      }
+    } else {
+      setIsPlaying(false);
+    }
+  }, [settings.autoPlayEnabled, selectedTrack, availableTracks]);
+
+  // Update playback status
+  const handlePlaybackStatusUpdate = useCallback(
+    async (status: any) => {
+      if (!status.isLoaded) return;
+
+      if (!isSeeking) {
+        setProgress(status.positionMillis / 1000);
+        setSessionTime(status.positionMillis / 1000);
+      }
+
+      // Check if track has completed
+      if (status.didJustFinish) {
+        handleTrackComplete();
+      }
+    },
+    [isSeeking, handleTrackComplete]
+  );
+
   // Show upgrade dialog
   const showUpgradeDialog = useCallback((track: AudioTrackAccess) => {
     Alert.alert(
@@ -384,6 +423,7 @@ const SessionPlayer: React.FC = () => {
           position={sessionTime}
           duration={duration}
           loading={loading}
+          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
         />
       </BlurView>
     </SafeAreaView>

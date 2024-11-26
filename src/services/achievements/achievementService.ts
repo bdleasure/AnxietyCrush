@@ -193,7 +193,6 @@ export class AchievementService {
   }
 
   async updateProgress(achievementId: string, progress: number): Promise<Achievement | null> {
-    console.log('Updating achievement progress:', achievementId, progress);
     const achievementDef = ACHIEVEMENT_DEFINITIONS[achievementId];
     if (!achievementDef) {
       console.error('Achievement definition not found:', achievementId);
@@ -205,14 +204,7 @@ export class AchievementService {
     
     achievement.currentProgress = Math.min(progress, achievementDef.requiredProgress);
     
-    console.log('Achievement state:', {
-      currentProgress: achievement.currentProgress,
-      requiredProgress: achievementDef.requiredProgress,
-      isUnlocked: achievement.isUnlocked
-    });
-    
     if (achievement.currentProgress >= achievementDef.requiredProgress && !achievement.isUnlocked) {
-      console.log('Achievement unlocked!', achievementId);
       achievement.isUnlocked = true;
       achievement.dateEarned = new Date().toISOString();
       
@@ -224,7 +216,6 @@ export class AchievementService {
         dateEarned: achievement.dateEarned
       };
       
-      console.log('Notifying unlock listeners with:', fullAchievement);
       this.notifyUnlockListeners(fullAchievement);
     }
 
@@ -244,7 +235,6 @@ export class AchievementService {
   }
 
   async resetProgress(): Promise<void> {
-    console.log('Resetting all achievement progress');
     await AsyncStorage.removeItem(STORAGE_KEY);
     
     // Get all achievements with reset state
@@ -256,40 +246,32 @@ export class AchievementService {
     }));
 
     // Notify listeners
-    console.log('Notifying listeners about reset');
     this.notifyResetListeners();
     this.notifyUpdateListeners(resetAchievements);
   }
 
   onAchievementUnlocked(callback: (achievement: Achievement) => void) {
-    console.log('Registering achievement unlock listener');
     this.unlockListeners.push(callback);
     return () => {
-      console.log('Unregistering achievement unlock listener');
       this.unlockListeners = this.unlockListeners.filter(l => l !== callback);
     };
   }
 
-  onAchievementsReset(callback: () => void) {
-    console.log('Registering achievement reset listener');
-    this.resetListeners.push(callback);
-    return () => {
-      console.log('Unregistering achievement reset listener');
-      this.resetListeners = this.resetListeners.filter(l => l !== callback);
-    };
-  }
-
   onAchievementsUpdated(callback: (achievements: Achievement[]) => void) {
-    console.log('Registering achievement update listener');
     this.updateListeners.push(callback);
     return () => {
-      console.log('Unregistering achievement update listener');
       this.updateListeners = this.updateListeners.filter(l => l !== callback);
     };
   }
 
+  onAchievementsReset(callback: () => void) {
+    this.resetListeners.push(callback);
+    return () => {
+      this.resetListeners = this.resetListeners.filter(l => l !== callback);
+    };
+  }
+
   private notifyUnlockListeners(achievement: Achievement) {
-    console.log('Notifying', this.unlockListeners.length, 'unlock listeners');
     this.unlockListeners.forEach(listener => {
       try {
         listener(achievement);
@@ -300,7 +282,6 @@ export class AchievementService {
   }
 
   private notifyResetListeners() {
-    console.log('Notifying', this.resetListeners.length, 'reset listeners');
     this.resetListeners.forEach(listener => {
       try {
         listener();
@@ -311,7 +292,6 @@ export class AchievementService {
   }
 
   private notifyUpdateListeners(achievements: Achievement[]) {
-    console.log('Notifying', this.updateListeners.length, 'update listeners with:', achievements);
     this.updateListeners.forEach(listener => {
       try {
         listener(achievements);

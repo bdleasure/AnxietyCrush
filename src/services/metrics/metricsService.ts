@@ -85,13 +85,6 @@ class MetricsService {
       // Ensure minimum session duration of 0.5 minutes
       sessionDuration = Math.max(sessionDuration, 0.5);
 
-      console.log('Recording session with duration:', {
-        original: session.duration,
-        converted: sessionDuration,
-        unit: 'minutes',
-        completed: session.completed
-      });
-
       // Update core metrics
       this.metrics.totalListeningTime = (this.metrics.totalListeningTime || 0) + sessionDuration;
       this.metrics.sessionsCompleted = (this.metrics.sessionsCompleted || 0) + 1;
@@ -128,14 +121,6 @@ class MetricsService {
       this.metrics.dailyProgress = this.metrics.dailyProgress
         .sort((a, b) => b.date.localeCompare(a.date))
         .slice(0, 30);
-
-      console.log('Updated metrics:', {
-        totalTime: this.metrics.totalListeningTime,
-        sessionsCompleted: this.metrics.sessionsCompleted,
-        avgSession: this.metrics.totalListeningTime / this.metrics.sessionsCompleted,
-        completed: session.completed,
-        dailyProgress: this.metrics.dailyProgress.length
-      });
 
       // Save all changes
       await this.saveMetrics();

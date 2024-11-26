@@ -35,33 +35,6 @@ const SettingRow: React.FC<{
   </View>
 );
 
-const QualitySelector: React.FC<{
-  value: 'high' | 'medium' | 'low';
-  onChange: (value: 'high' | 'medium' | 'low') => void;
-}> = ({ value, onChange }) => (
-  <View style={styles.qualitySelector}>
-    {(['low', 'medium', 'high'] as const).map((quality) => (
-      <TouchableOpacity
-        key={quality}
-        style={[
-          styles.qualityOption,
-          value === quality && styles.qualityOptionSelected,
-        ]}
-        onPress={() => onChange(quality)}
-      >
-        <Text
-          style={[
-            styles.qualityText,
-            value === quality && styles.qualityTextSelected,
-          ]}
-        >
-          {quality.charAt(0).toUpperCase() + quality.slice(1)}
-        </Text>
-      </TouchableOpacity>
-    ))}
-  </View>
-);
-
 const SettingsScreen = () => {
   const { settings, updateSetting, resetSettings } = useSettings();
   const [showTimePicker, setShowTimePicker] = React.useState(false);
@@ -91,25 +64,7 @@ const SettingsScreen = () => {
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.content}>
-        <SettingSection title="Audio Preferences">
-          <SettingRow label="Background Sounds">
-            <Switch
-              value={settings.backgroundSoundsEnabled}
-              onValueChange={() => handleToggle('backgroundSoundsEnabled')}
-            />
-          </SettingRow>
-          <SettingRow label="Notification Sounds">
-            <Switch
-              value={settings.notificationSoundsEnabled}
-              onValueChange={() => handleToggle('notificationSoundsEnabled')}
-            />
-          </SettingRow>
-          <SettingRow label="Download Quality">
-            <QualitySelector
-              value={settings.downloadQuality}
-              onChange={(value) => updateSetting('downloadQuality', value)}
-            />
-          </SettingRow>
+        <SettingSection title="Playback">
           <SettingRow label="Auto-play Next Session">
             <Switch
               value={settings.autoPlayEnabled}
@@ -118,7 +73,7 @@ const SettingsScreen = () => {
           </SettingRow>
         </SettingSection>
 
-        <SettingSection title="Notification Settings">
+        <SettingSection title="Notifications">
           <SettingRow label="Daily Reminder">
             <TouchableOpacity
               style={styles.timeButton}
@@ -129,49 +84,25 @@ const SettingsScreen = () => {
               </Text>
             </TouchableOpacity>
           </SettingRow>
-          <SettingRow label="Streak Alerts">
-            <Switch
-              value={settings.streakAlertsEnabled}
-              onValueChange={() => handleToggle('streakAlertsEnabled')}
-            />
-          </SettingRow>
           <SettingRow label="Achievement Notifications">
             <Switch
               value={settings.achievementNotificationsEnabled}
               onValueChange={() => handleToggle('achievementNotificationsEnabled')}
             />
           </SettingRow>
-          <SettingRow label="Progress Updates">
-            <Switch
-              value={settings.progressUpdatesEnabled}
-              onValueChange={() => handleToggle('progressUpdatesEnabled')}
-            />
-          </SettingRow>
         </SettingSection>
 
-        <SettingSection title="App Customization">
-          <SettingRow label="Theme">
-            <TouchableOpacity
-              style={styles.themeButton}
-              onPress={() =>
-                updateSetting('theme', settings.theme === 'dark' ? 'darker' : 'dark')
-              }
-            >
-              <Text style={styles.themeText}>
-                {settings.theme === 'dark' ? 'Dark' : 'Darker'}
-              </Text>
-            </TouchableOpacity>
+        <SettingSection title="Appearance & Feel">
+          <SettingRow label="Dark Theme">
+            <Switch
+              value={settings.theme === 'darker'}
+              onValueChange={() => updateSetting('theme', settings.theme === 'dark' ? 'darker' : 'dark')}
+            />
           </SettingRow>
           <SettingRow label="Haptic Feedback">
             <Switch
               value={settings.hapticFeedbackEnabled}
               onValueChange={() => handleToggle('hapticFeedbackEnabled')}
-            />
-          </SettingRow>
-          <SettingRow label="Animation Intensity">
-            <QualitySelector
-              value={settings.animationIntensity}
-              onChange={(value) => updateSetting('animationIntensity', value)}
             />
           </SettingRow>
         </SettingSection>
@@ -244,28 +175,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
-  qualitySelector: {
-    flexDirection: 'row',
-    backgroundColor: colors.cardBackground,
-    borderRadius: 8,
-    padding: 2,
-  },
-  qualityOption: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  qualityOptionSelected: {
-    backgroundColor: colors.primary,
-  },
-  qualityText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  qualityTextSelected: {
-    color: colors.textPrimary,
-    fontWeight: '600',
-  },
   timeButton: {
     backgroundColor: colors.cardBackground,
     paddingHorizontal: 12,
@@ -273,16 +182,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   timeText: {
-    fontSize: 14,
-    color: colors.textPrimary,
-  },
-  themeButton: {
-    backgroundColor: colors.cardBackground,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  themeText: {
     fontSize: 14,
     color: colors.textPrimary,
   },

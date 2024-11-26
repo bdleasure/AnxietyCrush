@@ -24,10 +24,12 @@ import { BONUS_TRACKS } from '../constants/tracks';
 import { Card } from '../components/shared/Card';
 import { H1, H2, H3, BodyMedium, BodySmall, Label } from '../components/shared/Typography';
 import { Button } from '../components/shared/Button';
+import { useSettings } from '../contexts/SettingsContext';
 
 const { width, height } = Dimensions.get('window');
 
 const BonusPlayerScreen: React.FC = () => {
+  const { settings } = useSettings();
   const [isPlaying, setIsPlaying] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -164,26 +166,41 @@ const BonusPlayerScreen: React.FC = () => {
   }, [navigation]);
 
   // Handle playback status updates
-  const handlePlaybackStatusUpdate = useCallback(async (status: any) => {
-    if (status.didJustFinish) {
-      setIsPlaying(false);
-      setSessionTime(0);
-      setProgress(0);
-      
-      // Record completed session
-      await metricsService.recordSession({
-        trackId: selectedTrack.id,
-        duration: duration / 60, // Convert seconds back to minutes for metrics
-        completed: true,
-      });
-    } else if (status.isLoaded && status.durationMillis) {
-      const newDuration = status.durationMillis / 1000;
-      // Only update duration if it's significantly different
-      if (Math.abs(newDuration - duration) > 1) {
-        setDuration(newDuration);
+  const handlePlaybackStatusUpdate = useCallback(
+    async (status: any) => {
+      if (!status.isLoaded) return;
+
+      if (!isSeeking) {
+        setProgress(status.positionMillis / 1000);
+        setSessionTime(status.positionMillis / 1000);
       }
+
+      // Check if track has completed
+      if (status.didJustFinish) {
+        handleTrackComplete();
+      }
+    },
+    [isSeeking, handleTrackComplete]
+  );
+
+  // Handle track completion and auto-play
+  const handleTrackComplete = useCallback(async () => {
+    if (settings.autoPlayEnabled) {
+      // Find the next track in the available tracks list
+      const currentIndex = availableTracks.findIndex(track => track.id === selectedTrack.id);
+      const nextTrack = availableTracks[currentIndex + 1];
+      
+      if (nextTrack) {
+        setSelectedTrack(nextTrack);
+        await realityWaveGenerator.startRealityWave(nextTrack, true);
+        setIsPlaying(true);
+      } else {
+        setIsPlaying(false);
+      }
+    } else {
+      setIsPlaying(false);
     }
-  }, [selectedTrack, duration]);
+  }, [settings.autoPlayEnabled, selectedTrack, availableTracks]);
 
   useEffect(() => {
     realityWaveGenerator.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
