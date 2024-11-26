@@ -121,9 +121,10 @@ export class RealityWaveGenerator {
     try {
       // If we're already playing this track
       if (this.sound && this.currentTrack?.id === track.id) {
+        const status = await this.sound.getStatusAsync();
         await this.sound.setStatusAsync({ 
           shouldPlay,
-          positionMillis: 0
+          positionMillis: status.isLoaded ? status.positionMillis : 0
         });
         return;
       }
@@ -140,7 +141,7 @@ export class RealityWaveGenerator {
       const { sound } = await Audio.Sound.createAsync(
         audioSource,
         { 
-          shouldPlay,  
+          shouldPlay,
           positionMillis: 0
         },
         this.handlePlaybackStatusUpdate
@@ -159,9 +160,11 @@ export class RealityWaveGenerator {
       if (this.sound) {
         const status = await this.sound.getStatusAsync();
         if (status.isLoaded) {
-          this.lastPosition = status.positionMillis;
+          await this.sound.setStatusAsync({ 
+            shouldPlay: false,
+            positionMillis: status.positionMillis // Maintain current position
+          });
         }
-        await this.sound.setStatusAsync({ shouldPlay: false });
       }
     } catch (error) {
       console.error('Error pausing reality wave:', error);
