@@ -286,11 +286,49 @@ const BonusPlayerScreen: React.FC = () => {
       } else {
         await realityWaveGenerator.pauseRealityWave();
         setIsPlaying(false);
+
+        // Record any session with meaningful progress (>10 seconds)
+        if (sessionTime > 10) {
+          const sessionRecord = {
+            id: `${selectedTrack.id}_${Date.now()}`,
+            trackId: selectedTrack.id,
+            startTime: new Date().toISOString(),
+            duration: sessionTime,
+            type: selectedTrack.type || 'bonus',
+            completed: progress >= 0.99,
+          };
+          await metricsService.recordSession(sessionRecord);
+        }
       }
     } catch (error) {
       console.error('Error playing/pausing audio:', error);
     }
   };
+
+  // Handle session completion
+  useEffect(() => {
+    if (progress >= 0.99 && isPlaying) {
+      const completeSession = async () => {
+        try {
+          await realityWaveGenerator.pauseRealityWave();
+          setIsPlaying(false);
+
+          const sessionRecord = {
+            id: `${selectedTrack.id}_${Date.now()}`,
+            trackId: selectedTrack.id,
+            startTime: new Date().toISOString(),
+            duration: sessionTime,
+            type: selectedTrack.type || 'bonus',
+            completed: true,
+          };
+          await metricsService.recordSession(sessionRecord);
+        } catch (error) {
+          console.error('Error completing session:', error);
+        }
+      };
+      completeSession();
+    }
+  }, [progress, isPlaying, selectedTrack, sessionTime]);
 
   useEffect(() => {
     const checkSubscriptionAndReset = async () => {

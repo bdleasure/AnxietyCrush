@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { UserMetrics, SessionRecord } from './types';
+import { UserMetrics, SessionRecord, DailyProgress } from './types';
 
 const METRICS_KEY = '@anxiety_crush/user_metrics';
 const SESSIONS_KEY = '@anxiety_crush/session_records';
+const DAILY_PROGRESS_KEY = '@anxiety_crush/daily_progress';
 
 const DEFAULT_METRICS: UserMetrics = {
   sessionsCompleted: 0,
@@ -18,6 +19,7 @@ const DEFAULT_METRICS: UserMetrics = {
   focusScore: 0,
   calmScore: 0,
   controlScore: 0,
+  dailyProgress: [],
 };
 
 class MetricsService {
@@ -30,8 +32,16 @@ class MetricsService {
 
   private async loadMetrics() {
     try {
-      const metricsStr = await AsyncStorage.getItem(METRICS_KEY);
-      this.metrics = metricsStr ? { ...DEFAULT_METRICS, ...JSON.parse(metricsStr) } : DEFAULT_METRICS;
+      const [metricsStr, dailyProgressStr] = await Promise.all([
+        AsyncStorage.getItem(METRICS_KEY),
+        AsyncStorage.getItem(DAILY_PROGRESS_KEY),
+      ]);
+
+      const dailyProgress = dailyProgressStr ? JSON.parse(dailyProgressStr) : [];
+      this.metrics = metricsStr 
+        ? { ...DEFAULT_METRICS, ...JSON.parse(metricsStr), dailyProgress } 
+        : { ...DEFAULT_METRICS, dailyProgress };
+
       this.notifyListeners();
     } catch (error) {
       console.error('Error loading metrics:', error);
@@ -40,7 +50,10 @@ class MetricsService {
 
   private async saveMetrics() {
     try {
-      await AsyncStorage.setItem(METRICS_KEY, JSON.stringify(this.metrics));
+      await Promise.all([
+        AsyncStorage.setItem(METRICS_KEY, JSON.stringify(this.metrics)),
+        AsyncStorage.setItem(DAILY_PROGRESS_KEY, JSON.stringify(this.metrics.dailyProgress)),
+      ]);
       this.notifyListeners();
     } catch (error) {
       console.error('Error saving metrics:', error);
@@ -91,11 +104,37 @@ class MetricsService {
       // Update transformation metrics based on completion
       this.updateTransformationMetrics(sessionDuration, session.completed);
 
+      // Update daily progress
+      const today = new Date().toISOString().split('T')[0];
+      const todayProgress = this.metrics.dailyProgress?.find(p => p.date === today);
+      
+      if (todayProgress) {
+        todayProgress.sessionsCompleted++;
+        todayProgress.totalTime += sessionDuration;
+        todayProgress.realityScore = this.metrics.realityScore;
+      } else {
+        this.metrics.dailyProgress = [
+          ...(this.metrics.dailyProgress || []),
+          {
+            date: today,
+            realityScore: this.metrics.realityScore,
+            sessionsCompleted: 1,
+            totalTime: sessionDuration,
+          }
+        ];
+      }
+
+      // Keep only last 30 days of progress
+      this.metrics.dailyProgress = this.metrics.dailyProgress
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 30);
+
       console.log('Updated metrics:', {
         totalTime: this.metrics.totalListeningTime,
         sessionsCompleted: this.metrics.sessionsCompleted,
         avgSession: this.metrics.totalListeningTime / this.metrics.sessionsCompleted,
-        completed: session.completed
+        completed: session.completed,
+        dailyProgress: this.metrics.dailyProgress.length
       });
 
       // Save all changes
@@ -155,7 +194,7 @@ class MetricsService {
 
   async resetMetrics() {
     this.metrics = DEFAULT_METRICS;
-    await AsyncStorage.multiRemove([METRICS_KEY, SESSIONS_KEY]);
+    await AsyncStorage.multiRemove([METRICS_KEY, SESSIONS_KEY, DAILY_PROGRESS_KEY]);
     await this.saveMetrics();
   }
 

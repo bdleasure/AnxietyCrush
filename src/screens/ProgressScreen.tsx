@@ -70,6 +70,7 @@ const ProgressScreen = () => {
       stroke: colors.border,
       strokeOpacity: 0.2,
     },
+    decimalPlaces: 0, // Whole numbers only
   };
 
   const handleResetMetrics = () => {
@@ -117,17 +118,17 @@ const ProgressScreen = () => {
         <View style={styles.metricsContainer}>
           <MetricCard 
             value={metrics.sessionsCompleted} 
-            label="Anxiety Shifts" 
+            label="Sessions" 
           />
           <View style={styles.metricSpacer} />
           <MetricCard 
             value={`${metrics.currentStreak}d`} 
-            label="Control Streak" 
+            label="Daily Streak" 
           />
           <View style={styles.metricSpacer} />
           <MetricCard 
             value={metrics.realityScore} 
-            label="Reality Power" 
+            label="Progress" 
           />
         </View>
 
