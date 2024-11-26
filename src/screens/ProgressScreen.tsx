@@ -110,28 +110,29 @@ const ProgressScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Progress Tracking</Text>
+        <Text style={styles.title}>Reality Transformation</Text>
+        <Text style={styles.subtitle}>Watch as anxiety becomes your superpower</Text>
       </View>
       <View style={styles.content}>
         <View style={styles.metricsContainer}>
           <MetricCard 
             value={metrics.sessionsCompleted} 
-            label="Total Sessions" 
+            label="Anxiety Shifts" 
           />
           <View style={styles.metricSpacer} />
           <MetricCard 
             value={`${metrics.currentStreak}d`} 
-            label="Day Streak" 
+            label="Control Streak" 
           />
           <View style={styles.metricSpacer} />
           <MetricCard 
             value={metrics.realityScore} 
-            label="Reality Level" 
+            label="Reality Power" 
           />
         </View>
 
         <View style={styles.chartContainer}>
-          <Text style={styles.chartTitle}>Reality Level Progress</Text>
+          <Text style={styles.chartTitle}>Your Transformation Journey</Text>
           <LineChart
             data={{
               labels: dates,

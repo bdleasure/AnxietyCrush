@@ -55,7 +55,6 @@ const ACHIEVEMENT_DEFINITIONS: { [key: string]: Omit<Achievement, 'currentProgre
     requiredProgress: 7,
     icon: 'fire',
     category: 'streak',
-    reward: { type: 'theme', value: 'master_theme' },
   },
   [ACHIEVEMENTS.STREAK_LEGEND]: {
     id: ACHIEVEMENTS.STREAK_LEGEND,
@@ -71,34 +70,34 @@ const ACHIEVEMENT_DEFINITIONS: { [key: string]: Omit<Achievement, 'currentProgre
   [ACHIEVEMENTS.TIME_TRAVELER]: {
     id: ACHIEVEMENTS.TIME_TRAVELER,
     title: 'Time Traveler',
-    description: 'Spend 1 hour in sessions',
-    requiredProgress: 60,
-    icon: 'clock-outline',
+    description: 'Listen for a total of 1 hour',
+    requiredProgress: 1,
+    icon: 'clock',
     category: 'time',
   },
   [ACHIEVEMENTS.MINDFUL_MINUTES]: {
     id: ACHIEVEMENTS.MINDFUL_MINUTES,
     title: 'Mindful Minutes',
-    description: 'Spend 5 hours in sessions',
-    requiredProgress: 300,
-    icon: 'brain',
+    description: 'Listen for a total of 5 hours',
+    requiredProgress: 5,
+    icon: 'clock',
     category: 'time',
   },
   [ACHIEVEMENTS.HOUR_HERO]: {
     id: ACHIEVEMENTS.HOUR_HERO,
     title: 'Hour Hero',
-    description: 'Spend 10 hours in sessions',
-    requiredProgress: 600,
-    icon: 'clock-check-outline',
+    description: 'Listen for a total of 10 hours',
+    requiredProgress: 10,
+    icon: 'clock',
     category: 'time',
-    reward: { type: 'sound', value: 'hero_sound' },
+    reward: { type: 'badge', value: 'time_badge' },
   },
 
   // Reality Achievements
   [ACHIEVEMENTS.REALITY_RISING]: {
     id: ACHIEVEMENTS.REALITY_RISING,
     title: 'Reality Rising',
-    description: 'Reach Reality Level 5',
+    description: 'Earn 500 Reality Points from sessions',
     requiredProgress: 5,
     icon: 'trending-up',
     category: 'reality',
@@ -106,7 +105,7 @@ const ACHIEVEMENT_DEFINITIONS: { [key: string]: Omit<Achievement, 'currentProgre
   [ACHIEVEMENTS.REALITY_MASTER]: {
     id: ACHIEVEMENTS.REALITY_MASTER,
     title: 'Reality Master',
-    description: 'Reach Reality Level 10',
+    description: 'Earn 1,000 Reality Points from sessions',
     requiredProgress: 10,
     icon: 'shield',
     category: 'reality',
@@ -115,7 +114,7 @@ const ACHIEVEMENT_DEFINITIONS: { [key: string]: Omit<Achievement, 'currentProgre
   [ACHIEVEMENTS.REALITY_SAGE]: {
     id: ACHIEVEMENTS.REALITY_SAGE,
     title: 'Reality Sage',
-    description: 'Reach Reality Level 20',
+    description: 'Earn 2,000 Reality Points from sessions',
     requiredProgress: 20,
     icon: 'crown',
     category: 'reality',
@@ -150,7 +149,12 @@ const ACHIEVEMENT_DEFINITIONS: { [key: string]: Omit<Achievement, 'currentProgre
   },
 };
 
-class AchievementService {
+export class AchievementService {
+  private achievements: Achievement[] = [];
+  private unlockListeners: ((achievement: Achievement) => void)[] = [];
+  private resetListeners: (() => void)[] = [];
+  private updateListeners: ((achievements: Achievement[]) => void)[] = [];
+
   private async getProgress(): Promise<AchievementProgress> {
     try {
       const progress = await AsyncStorage.getItem(STORAGE_KEY);
@@ -164,6 +168,10 @@ class AchievementService {
   private async saveProgress(progress: AchievementProgress): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+      
+      // After saving, get all achievements and notify update listeners
+      const allAchievements = await this.getAllAchievements();
+      this.notifyUpdateListeners(allAchievements);
     } catch (error) {
       console.error('Error saving achievement progress:', error);
     }
@@ -185,16 +193,39 @@ class AchievementService {
   }
 
   async updateProgress(achievementId: string, progress: number): Promise<Achievement | null> {
+    console.log('Updating achievement progress:', achievementId, progress);
     const achievementDef = ACHIEVEMENT_DEFINITIONS[achievementId];
-    if (!achievementDef) return null;
+    if (!achievementDef) {
+      console.error('Achievement definition not found:', achievementId);
+      return null;
+    }
 
     const currentProgress = await this.getProgress();
     const achievement = currentProgress[achievementId] || { currentProgress: 0, isUnlocked: false };
     
     achievement.currentProgress = Math.min(progress, achievementDef.requiredProgress);
+    
+    console.log('Achievement state:', {
+      currentProgress: achievement.currentProgress,
+      requiredProgress: achievementDef.requiredProgress,
+      isUnlocked: achievement.isUnlocked
+    });
+    
     if (achievement.currentProgress >= achievementDef.requiredProgress && !achievement.isUnlocked) {
+      console.log('Achievement unlocked!', achievementId);
       achievement.isUnlocked = true;
       achievement.dateEarned = new Date().toISOString();
+      
+      const fullAchievement = { 
+        ...achievementDef, 
+        ...achievement,
+        currentProgress: achievement.currentProgress,
+        isUnlocked: true,
+        dateEarned: achievement.dateEarned
+      };
+      
+      console.log('Notifying unlock listeners with:', fullAchievement);
+      this.notifyUnlockListeners(fullAchievement);
     }
 
     const updatedProgress = {
@@ -213,7 +244,81 @@ class AchievementService {
   }
 
   async resetProgress(): Promise<void> {
+    console.log('Resetting all achievement progress');
     await AsyncStorage.removeItem(STORAGE_KEY);
+    
+    // Get all achievements with reset state
+    const resetAchievements = Object.values(ACHIEVEMENT_DEFINITIONS).map(achievement => ({
+      ...achievement,
+      currentProgress: 0,
+      isUnlocked: false,
+      dateEarned: undefined,
+    }));
+
+    // Notify listeners
+    console.log('Notifying listeners about reset');
+    this.notifyResetListeners();
+    this.notifyUpdateListeners(resetAchievements);
+  }
+
+  onAchievementUnlocked(callback: (achievement: Achievement) => void) {
+    console.log('Registering achievement unlock listener');
+    this.unlockListeners.push(callback);
+    return () => {
+      console.log('Unregistering achievement unlock listener');
+      this.unlockListeners = this.unlockListeners.filter(l => l !== callback);
+    };
+  }
+
+  onAchievementsReset(callback: () => void) {
+    console.log('Registering achievement reset listener');
+    this.resetListeners.push(callback);
+    return () => {
+      console.log('Unregistering achievement reset listener');
+      this.resetListeners = this.resetListeners.filter(l => l !== callback);
+    };
+  }
+
+  onAchievementsUpdated(callback: (achievements: Achievement[]) => void) {
+    console.log('Registering achievement update listener');
+    this.updateListeners.push(callback);
+    return () => {
+      console.log('Unregistering achievement update listener');
+      this.updateListeners = this.updateListeners.filter(l => l !== callback);
+    };
+  }
+
+  private notifyUnlockListeners(achievement: Achievement) {
+    console.log('Notifying', this.unlockListeners.length, 'unlock listeners');
+    this.unlockListeners.forEach(listener => {
+      try {
+        listener(achievement);
+      } catch (error) {
+        console.error('Error in achievement unlock listener:', error);
+      }
+    });
+  }
+
+  private notifyResetListeners() {
+    console.log('Notifying', this.resetListeners.length, 'reset listeners');
+    this.resetListeners.forEach(listener => {
+      try {
+        listener();
+      } catch (error) {
+        console.error('Error in achievement reset listener:', error);
+      }
+    });
+  }
+
+  private notifyUpdateListeners(achievements: Achievement[]) {
+    console.log('Notifying', this.updateListeners.length, 'update listeners with:', achievements);
+    this.updateListeners.forEach(listener => {
+      try {
+        listener(achievements);
+      } catch (error) {
+        console.error('Error in achievement update listener:', error);
+      }
+    });
   }
 }
 

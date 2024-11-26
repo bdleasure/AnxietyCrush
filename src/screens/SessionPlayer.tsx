@@ -235,14 +235,15 @@ const SessionPlayer: React.FC = () => {
         await realityWaveGenerator.pauseRealityWave();
         setIsPlaying(false);
 
-        // Record session when paused if significant progress was made (>80%)
-        if (progress >= 0.8) {
+        // Record any session with meaningful progress (>10 seconds)
+        if (sessionTime > 10) {
           const sessionRecord = {
             id: `${selectedTrack.id}_${Date.now()}`,
             trackId: selectedTrack.id,
             startTime: new Date().toISOString(),
             duration: sessionTime,
             type: selectedTrack.type || 'regular',
+            completed: progress >= 0.99,
           };
           await metricsService.recordSession(sessionRecord);
         }
@@ -266,6 +267,7 @@ const SessionPlayer: React.FC = () => {
             startTime: new Date().toISOString(),
             duration: sessionTime,
             type: selectedTrack.type || 'regular',
+            completed: true,
           };
           await metricsService.recordSession(sessionRecord);
         } catch (error) {

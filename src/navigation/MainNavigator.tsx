@@ -3,9 +3,11 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { withLazyLoading } from '../utils/lazyLoad';
 import SessionPlayer from '../screens/SessionPlayer';  // Direct import for initial screen
+import DebugScreen from '../screens/DebugScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -29,6 +31,10 @@ const TAB_ICON = {
   Settings: {
     active: 'settings',
     inactive: 'settings-outline',
+  },
+  Debug: {
+    active: 'bug',
+    inactive: 'bug-outline',
   },
 };
 
@@ -116,6 +122,15 @@ export const MainNavigator = () => {
                 size={size} 
                 color={color} 
               />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Debug"
+          component={DebugScreen}
+          options={{
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name="bug" size={24} color={color} />
             ),
           }}
         />

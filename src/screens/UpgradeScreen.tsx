@@ -245,8 +245,8 @@ const UpgradeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Upgrade Your Reality</Text>
-        <Text style={styles.subtitle}>Choose your transformation path</Text>
+        <Text style={styles.title}>Transform Your Reality</Text>
+        <Text style={styles.subtitle}>Turn Anxiety into Your Greatest Asset</Text>
       </View>
 
       <ScrollView
@@ -254,6 +254,18 @@ const UpgradeScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.introSection}>
+          <Text style={styles.introText}>
+            Reality Wave technology helps you flip the switch from:
+          </Text>
+          <View style={styles.transformationList}>
+            <Text style={styles.transformItem}>• Overthinking to Clarity</Text>
+            <Text style={styles.transformItem}>• Anxiety to Calm</Text>
+            <Text style={styles.transformItem}>• Chaos to Control</Text>
+            <Text style={styles.transformItem}>• Stress to Success</Text>
+          </View>
+        </View>
+
         {SUBSCRIPTION_PLANS.map((plan) => (
           <View key={`plan-container-${plan.tier.toLowerCase()}`}>
             <PlanCard
@@ -268,10 +280,10 @@ const UpgradeScreen: React.FC = () => {
         <View style={styles.guaranteeSection}>
           <Ionicons name="shield-checkmark" size={24} color={colors.accent} />
           <Text style={styles.guaranteeText}>
-            30-Day Reality Shift Guarantee
+            30-Day Reality Transformation Guarantee
           </Text>
           <Text style={styles.guaranteeDescription}>
-            Experience your first reality shift or get double your money back
+            Feel the power of anxiety transformed into achievement, or get double your money back
           </Text>
         </View>
       </ScrollView>
@@ -422,6 +434,27 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  introSection: {
+    padding: 20,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 15,
+    marginBottom: 20,
+  },
+  introText: {
+    fontSize: 16,
+    color: colors.textPrimary,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  transformationList: {
+    paddingLeft: 20,
+  },
+  transformItem: {
+    fontSize: 16,
+    color: colors.textPrimary,
+    marginBottom: 8,
+    fontWeight: '500',
   },
 });
 

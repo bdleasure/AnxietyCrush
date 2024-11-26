@@ -32,11 +32,13 @@ const ProfileScreen: React.FC<Props> = () => {
   const [selectedCategory, setSelectedCategory] = useState<AchievementCategory>('session');
 
   const loadData = async () => {
+    console.log('Loading profile data...');
     const [loadedAchievements, userMetrics] = await Promise.all([
       achievementService.getAllAchievements(),
       metricsService.getUserMetrics(),
     ]);
     
+    console.log('Loaded achievements:', loadedAchievements);
     setAchievements(loadedAchievements);
     setMetrics({
       totalListeningTime: userMetrics.totalListeningTime || 0,
@@ -48,8 +50,40 @@ const ProfileScreen: React.FC<Props> = () => {
     });
   };
 
+  // Listen for achievement updates
+  useEffect(() => {
+    console.log('Setting up achievement listeners in ProfileScreen');
+    
+    // Listen for all achievement updates
+    const unsubscribeUpdate = achievementService.onAchievementsUpdated((achievements) => {
+      console.log('Achievements updated in ProfileScreen:', achievements);
+      setAchievements(achievements);
+    });
+
+    return () => {
+      console.log('Cleaning up achievement listeners in ProfileScreen');
+      unsubscribeUpdate();
+    };
+  }, []);
+
   useEffect(() => {
     loadData();
+    
+    // Subscribe to metrics updates
+    const unsubscribe = metricsService.addListener((updatedMetrics) => {
+      setMetrics({
+        totalListeningTime: updatedMetrics.totalListeningTime || 0,
+        averageSessionLength: updatedMetrics.sessionsCompleted > 0
+          ? Math.round(updatedMetrics.totalListeningTime / updatedMetrics.sessionsCompleted)
+          : 0,
+        bestStreak: updatedMetrics.bestStreak || 0,
+        realityScore: updatedMetrics.realityScore || 0,
+      });
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const onRefresh = useCallback(async () => {
@@ -71,11 +105,19 @@ const ProfileScreen: React.FC<Props> = () => {
     special: 'star',
   };
 
+  const categoryDescriptions = {
+    session: "Transform anxiety into focus through guided sessions. Each session strengthens your ability to shift from overthinking to clarity.",
+    streak: "Build momentum in your transformation journey. Consistent practice helps you shift from chaos to control, making each day more empowered than the last.",
+    time: "Track your journey from stress to success. Every minute spent in practice reinforces your ability to transform anxiety into achievement.",
+    reality: "Harness the power of Reality Wave technology to reshape your reality. Convert anxious energy into focused power and unlock your full potential.",
+    special: "Discover unique ways to flip the anxiety switch. These achievements mark special moments where you've turned challenges into triumphs.",
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.heading}>Profile</Text>
-        <Text style={styles.subheading}>Your Personal Journey</Text>
+        <Text style={styles.heading}>Your Reality Shift</Text>
+        <Text style={styles.subheading}>Transforming Anxiety into Achievement</Text>
       </View>
       
       <ScrollView 
@@ -141,6 +183,13 @@ const ProfileScreen: React.FC<Props> = () => {
             </View>
           ))}
         </ScrollView>
+
+        {/* Category Description */}
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.descriptionText}>
+            {categoryDescriptions[selectedCategory]}
+          </Text>
+        </View>
 
         {/* Achievements */}
         <View style={styles.achievementsContainer}>
@@ -242,6 +291,21 @@ const styles = StyleSheet.create({
   categoryTextActive: {
     color: colors.textPrimary,
     fontWeight: '600',
+  },
+  descriptionContainer: {
+    marginBottom: 20,
+    padding: 16,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 15,
+    elevation: 3,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  descriptionText: {
+    fontSize: 16,
+    color: colors.textPrimary,
   },
   achievementsContainer: {
     flex: 1,

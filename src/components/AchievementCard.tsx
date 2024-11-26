@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { Achievement } from '../services/achievements/types';
 import * as Haptics from 'expo-haptics';
-import ConfettiCannon from 'react-native-confetti-cannon';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface Props {
   achievement: Achievement;
@@ -19,7 +19,7 @@ export const AchievementCard: React.FC<Props> = ({
 }) => {
   const progressAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const confettiRef = useRef<ConfettiCannon>(null);
+  const opacityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(progressAnim, {
@@ -32,18 +32,32 @@ export const AchievementCard: React.FC<Props> = ({
   useEffect(() => {
     if (showAnimation && achievement.isUnlocked) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      confettiRef.current?.start();
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
+      
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.sequence([
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]),
       ]).start();
     }
   }, [showAnimation, achievement.isUnlocked]);
@@ -51,6 +65,34 @@ export const AchievementCard: React.FC<Props> = ({
   const formattedDate = achievement.dateEarned 
     ? new Date(achievement.dateEarned).toLocaleDateString()
     : null;
+
+  const getProgressColor = () => {
+    const progress = achievement.currentProgress / achievement.requiredProgress;
+    if (achievement.isUnlocked) return colors.success;
+    if (progress >= 0.7) return colors.warning;
+    if (progress >= 0.3) return colors.accent;
+    return colors.textSecondary;
+  };
+
+  const getBackgroundGradient = () => {
+    if (achievement.isUnlocked) {
+      switch (achievement.category) {
+        case 'beginner':
+          return ['#4CAF50', '#2E7D32'];
+        case 'intermediate':
+          return ['#2196F3', '#1565C0'];
+        case 'advanced':
+          return ['#9C27B0', '#6A1B9A'];
+        case 'master':
+          return ['#F44336', '#C62828'];
+        case 'special':
+          return ['#FFD700', '#FFA000'];
+        default:
+          return ['#4CAF50', '#2E7D32'];
+      }
+    }
+    return [colors.cardBackground, colors.cardBackground];
+  };
 
   return (
     <TouchableOpacity 
@@ -63,59 +105,91 @@ export const AchievementCard: React.FC<Props> = ({
       <Animated.View 
         style={[
           styles.container,
-          achievement.isUnlocked && styles.unlockedContainer,
-          { transform: [{ scale: scaleAnim }] }
+          {
+            transform: [{ scale: scaleAnim }],
+            opacity: achievement.isUnlocked ? 1 : 0.7,
+          }
         ]}
       >
+        <LinearGradient
+          colors={getBackgroundGradient()}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            styles.glowOverlay,
+            {
+              opacity: opacityAnim,
+            }
+          ]}
+        />
         <View style={styles.contentContainer}>
-          <View style={styles.iconContainer}>
+          <View style={[
+            styles.iconContainer,
+            achievement.isUnlocked && styles.unlockedIconContainer
+          ]}>
             <MaterialCommunityIcons
               name={achievement.icon as any}
               size={24}
-              color={achievement.isUnlocked ? colors.accent : colors.textSecondary}
+              color={achievement.isUnlocked ? colors.white : colors.textSecondary}
             />
             {achievement.reward && (
-              <View style={styles.rewardBadge}>
+              <View style={[
+                styles.rewardBadge,
+                achievement.isUnlocked && styles.unlockedRewardBadge
+              ]}>
                 <MaterialCommunityIcons
                   name={achievement.reward.type === 'badge' ? 'medal' : 
                         achievement.reward.type === 'theme' ? 'palette' : 'music'}
                   size={12}
-                  color={colors.accent}
+                  color={achievement.isUnlocked ? colors.white : colors.accent}
                 />
               </View>
             )}
           </View>
           <View style={styles.textContainer}>
-            <Text style={styles.title}>{achievement.title}</Text>
-            <Text style={styles.description}>{achievement.description}</Text>
+            <Text style={[
+              styles.title,
+              achievement.isUnlocked && styles.unlockedText
+            ]}>
+              {achievement.title}
+            </Text>
+            <Text style={[
+              styles.description,
+              achievement.isUnlocked && styles.unlockedText
+            ]}>
+              {achievement.description}
+            </Text>
             <View style={styles.progressContainer}>
               <Animated.View 
                 style={[
                   styles.progressBar,
-                  { width: progressAnim.interpolate({
-                    inputRange: [0, 100],
-                    outputRange: ['0%', '100%'],
-                  }) }
+                  { 
+                    width: progressAnim.interpolate({
+                      inputRange: [0, 100],
+                      outputRange: ['0%', '100%'],
+                    }),
+                    backgroundColor: getProgressColor(),
+                  }
                 ]} 
               />
-              <Text style={styles.progressText}>
+              <Text style={[
+                styles.progressText,
+                achievement.isUnlocked && styles.unlockedText
+              ]}>
                 {achievement.currentProgress} / {achievement.requiredProgress}
               </Text>
             </View>
             {achievement.isUnlocked && formattedDate && (
-              <Text style={styles.dateText}>Earned on {formattedDate}</Text>
+              <Text style={[styles.dateText, styles.unlockedText]}>
+                Earned on {formattedDate}
+              </Text>
             )}
           </View>
         </View>
-        {showAnimation && (
-          <ConfettiCannon
-            ref={confettiRef}
-            count={50}
-            origin={{ x: -10, y: 0 }}
-            autoStart={false}
-            fadeOut={true}
-          />
-        )}
       </Animated.View>
     </TouchableOpacity>
   );
@@ -123,42 +197,32 @@ export const AchievementCard: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.cardBackground,
     borderRadius: 15,
-    marginBottom: 15,
+    marginVertical: 8,
+    marginHorizontal: 16,
     overflow: 'hidden',
-    elevation: 3,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  unlockedContainer: {
-    borderColor: colors.accent,
     borderWidth: 1,
+    borderColor: colors.border,
+  },
+  glowOverlay: {
+    backgroundColor: colors.accent,
+    opacity: 0.3,
   },
   contentContainer: {
     flexDirection: 'row',
-    padding: 15,
+    padding: 16,
   },
   iconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.background,
-    justifyContent: 'center',
+    backgroundColor: colors.surface,
     alignItems: 'center',
-    marginRight: 15,
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  rewardBadge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: colors.background,
-    borderRadius: 10,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: colors.accent,
+  unlockedIconContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   textContainer: {
     flex: 1,
@@ -175,16 +239,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   progressContainer: {
-    height: 6,
-    backgroundColor: colors.border,
-    borderRadius: 3,
+    height: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 2,
     overflow: 'hidden',
     marginBottom: 4,
   },
   progressBar: {
     height: '100%',
     backgroundColor: colors.accent,
-    borderRadius: 3,
   },
   progressText: {
     fontSize: 12,
@@ -193,8 +256,28 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 12,
-    color: colors.accent,
+    color: colors.textSecondary,
     marginTop: 4,
     fontStyle: 'italic',
+  },
+  rewardBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  unlockedRewardBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: colors.white,
+  },
+  unlockedText: {
+    color: colors.white,
   },
 });
