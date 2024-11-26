@@ -32,13 +32,11 @@ const ProfileScreen: React.FC<Props> = () => {
   const [selectedCategory, setSelectedCategory] = useState<AchievementCategory>('session');
 
   const loadData = async () => {
-    console.log('Loading profile data...');
     const [loadedAchievements, userMetrics] = await Promise.all([
       achievementService.getAllAchievements(),
       metricsService.getUserMetrics(),
     ]);
     
-    console.log('Loaded achievements:', loadedAchievements);
     setAchievements(loadedAchievements);
     setMetrics({
       totalListeningTime: userMetrics.totalListeningTime || 0,
@@ -52,16 +50,12 @@ const ProfileScreen: React.FC<Props> = () => {
 
   // Listen for achievement updates
   useEffect(() => {
-    console.log('Setting up achievement listeners in ProfileScreen');
-    
     // Listen for all achievement updates
     const unsubscribeUpdate = achievementService.onAchievementsUpdated((achievements) => {
-      console.log('Achievements updated in ProfileScreen:', achievements);
       setAchievements(achievements);
     });
 
     return () => {
-      console.log('Cleaning up achievement listeners in ProfileScreen');
       unsubscribeUpdate();
     };
   }, []);
