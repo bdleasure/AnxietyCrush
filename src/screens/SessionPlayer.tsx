@@ -309,7 +309,7 @@ export const SessionPlayer: React.FC = () => {
             {tracks.map((track) => (
               <Card 
                 key={track.id} 
-                style={styles.trackCard}
+                style={[styles.trackCard, { borderWidth: 0 }]}
                 isSelected={selectedTrack.id === track.id}
               >
                 <TouchableOpacity
@@ -344,7 +344,7 @@ export const SessionPlayer: React.FC = () => {
         ))}
       </ScrollView>
 
-      <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
+      <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]} >
         <AudioControls
           audioPlayer={realityWaveGenerator}
           isPlaying={isPlaying}

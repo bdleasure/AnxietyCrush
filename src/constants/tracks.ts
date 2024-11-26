@@ -17,7 +17,7 @@ export const BONUS_TRACKS: AudioTrackAccess[] = [
     name: 'Focus Field Generator™',
     duration: 420,
     description: 'Generate laser-sharp focus instantly',
-    requiredTier: SubscriptionTier.PREMIUM,
+    requiredTier: SubscriptionTier.FREE,
     audioUrl: 'focus-field.mp3',
     category: 'Bonus Reality Waves',
     subtitle: 'Achieve peak mental clarity'

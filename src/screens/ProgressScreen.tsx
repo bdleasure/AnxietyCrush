@@ -180,9 +180,10 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.textPrimary,
+    paddingVertical: 8,
   },
   content: {
     flex: 1,

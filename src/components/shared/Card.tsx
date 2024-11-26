@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
+import { View, StyleSheet, ViewStyle, Platform, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../theme/colors';
 import { shadows } from '../../theme/shadows';
@@ -15,31 +15,53 @@ export const Card: React.FC<CardProps> = ({ children, style, isSelected = false 
   if (!isSelected) {
     return (
       <View style={[styles.card, styles.cardMargins, style]}>
-        {children}
+        <View style={styles.innerCard}>
+          {children}
+        </View>
       </View>
     );
   }
 
   return (
-    <LinearGradient
-      colors={['#7C3AED', '#EC4899']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradientContainer}
-    >
+    <View style={[styles.cardContainer, styles.cardMargins]}>
+      <LinearGradient
+        colors={[colors.accent, '#EC4899']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientBorder}
+      />
       <View style={[styles.card, style]}>
-        {children}
+        <View style={styles.innerCard}>
+          {children}
+        </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradientContainer: {
+  cardContainer: {
+    position: 'relative',
     borderRadius: spacing.borderRadius.lg,
-    padding: 0.5, // Very thin border
-    marginHorizontal: spacing.xs,
-    marginVertical: spacing.xxs,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.accent,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  gradientBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: spacing.borderRadius.lg,
   },
   cardMargins: {
     marginHorizontal: spacing.xs,
@@ -47,8 +69,14 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.cardBackground,
-    borderRadius: spacing.borderRadius.lg - 0.5,
+    borderRadius: spacing.borderRadius.lg - 1,
+    margin: 1,
+    overflow: 'hidden',
+  },
+  innerCard: {
     padding: spacing.cardPadding,
-    ...shadows.md,
+    borderRadius: spacing.borderRadius.lg - 1,
+    backgroundColor: `${colors.cardBackground}dd`,
+    backdropFilter: 'blur(10px)',
   },
 });

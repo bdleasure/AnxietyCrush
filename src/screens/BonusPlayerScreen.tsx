@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -199,7 +199,7 @@ export const BonusPlayerScreen: React.FC = () => {
     };
   }, [isPlaying, isSeeking, realityWaveGenerator, duration]);
 
-  // Handle track selection
+  // Handle track selection and playback
   const handleTrackPress = async (track: AudioTrackAccess) => {
     if (isLocked(track)) {
       navigation.navigate('Upgrade');
@@ -314,7 +314,11 @@ export const BonusPlayerScreen: React.FC = () => {
     const isSelected = selectedTrack?.id === track.id;
     
     return (
-      <Card key={track.id} style={styles.trackCard} isSelected={isSelected}>
+      <Card 
+        key={track.id} 
+        style={[styles.trackCard, { borderWidth: 0 }]} 
+        isSelected={isSelected}
+      >
         <TouchableOpacity
           onPress={() => handleTrackPress(track)}
           style={styles.trackButton}
@@ -344,7 +348,13 @@ export const BonusPlayerScreen: React.FC = () => {
         </TouchableOpacity>
       </Card>
     );
-  }, [selectedTrack, isLocked, loading, showUpgradeDialog, navigation]);
+  }, [selectedTrack?.id, loading, navigation, trackDurations, handleTrackPress, isLocked]);
+
+  // Memoize the track list
+  const trackList = useMemo(() => 
+    BONUS_TRACKS.map((track) => renderTrackCard(track)),
+    [renderTrackCard]
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -358,14 +368,12 @@ export const BonusPlayerScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {BONUS_TRACKS.map((track) => (
-          <View key={track.id}>
-            {renderTrackCard(track)}
-          </View>
-        ))}
+        <View style={styles.categorySection}>
+          {trackList}
+        </View>
       </ScrollView>
 
-      <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
+      <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]} >
         <AudioControls
           audioPlayer={realityWaveGenerator}
           isPlaying={isPlaying}
@@ -394,15 +402,19 @@ const styles = StyleSheet.create({
     padding: theme.spacing.screenPadding,
     paddingBottom: Platform.OS === 'ios' ? 180 : 160,
   },
-  sessionsContainer: {
-    gap: theme.spacing.md,
+  categorySection: {
+    marginBottom: theme.spacing.sectionSpacing,
+    paddingHorizontal: theme.spacing.xs,
   },
   trackCard: {
     marginBottom: theme.spacing.md,
-    marginHorizontal: theme.spacing.xs,
   },
   trackButton: {
     position: 'relative',
+  },
+  trackInfo: {
+    flex: 1,
+    paddingTop: theme.spacing.lg,
   },
   unlockContainer: {
     position: 'absolute',
@@ -412,10 +424,6 @@ const styles = StyleSheet.create({
   },
   unlockButton: {
     minWidth: 80,
-  },
-  trackInfo: {
-    flex: 1,
-    paddingTop: theme.spacing.lg,
   },
   trackTitle: {
     marginBottom: theme.spacing.xxs,
@@ -440,7 +448,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: theme.spacing.screenPadding,
     paddingTop: theme.spacing.screenPadding,
-    paddingBottom: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
   },
   title: {
     fontSize: 24,
