@@ -19,28 +19,46 @@ const formatAudioName = (filename: string): string => {
     .join(' ');
 };
 
-// Define our audio files
+// Define our audio files with their require statements
 const audioFiles = {
-  'anxietyCrusher': '11-Minute Anxiety Crusher.mp3',
-  'emergencyReset': '3-Minute Emergency Reset.mp3',
-  'deepProgramming': '30-Minute Deep Reality Programming.mp3',
-  'focusField': 'focus-field.mp3',
-  'sleepWave': 'sleep-wave.mp3',
-  'successPattern': 'success-pattern.mp3',
+  anxietyCrusher: {
+    filename: '11-Minute Anxiety Crusher.mp3',
+    module: require('../../assets/audio/11-Minute Anxiety Crusher.mp3'),
+  },
+  emergencyReset: {
+    filename: '3-Minute Emergency Reset.mp3',
+    module: require('../../assets/audio/3-Minute Emergency Reset.mp3'),
+  },
+  deepProgramming: {
+    filename: '30-Minute Deep Reality Programming.mp3',
+    module: require('../../assets/audio/30-Minute Deep Reality Programming.mp3'),
+  },
+  focusField: {
+    filename: 'focus-field.mp3',
+    module: require('../../assets/audio/focus-field.mp3'),
+  },
+  sleepWave: {
+    filename: 'sleep-wave.mp3',
+    module: require('../../assets/audio/sleep-wave.mp3'),
+  },
+  successPattern: {
+    filename: 'success-pattern.mp3',
+    module: require('../../assets/audio/success-pattern.mp3'),
+  },
 };
 
 // Get all audio assets
 export const getAudioAssets = (): { [key: string]: AudioAsset } => {
   const audioModules: { [key: string]: AudioAsset } = {};
 
-  Object.entries(audioFiles).forEach(([id, filename]) => {
+  Object.entries(audioFiles).forEach(([id, { filename, module }]) => {
     if (filename.includes('placeholder')) return;
 
     audioModules[id] = {
       id,
       name: formatAudioName(filename),
       duration: 0, // This will be updated when the audio is loaded
-      module: Asset.fromModule(require(`../../assets/audio/${filename}`)),
+      module: Asset.fromModule(module),
     };
   });
 
@@ -58,15 +76,9 @@ export const getAssetPath = (filename: string): string => {
 // Export audio assets for use in the app
 export const AudioAssets = getAudioAssets();
 
-// Function to register a new audio asset
-export const registerAudioAsset = (id: string, filename: string): void => {
-  if (!audioFiles[id]) {
-    audioFiles[id] = filename;
-    AudioAssets[id] = {
-      id,
-      name: formatAudioName(filename),
-      duration: 0,
-      module: Asset.fromModule(require(`../../assets/audio/${filename}`)),
-    };
-  }
-};
+/**
+ * To add a new audio file:
+ * 1. Add the file to the assets/audio directory
+ * 2. Add a new entry to the audioFiles object above with the correct require statement
+ * 3. The system will automatically handle loading and making it available
+ */
