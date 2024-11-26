@@ -2,21 +2,13 @@ import { Asset } from 'expo-asset';
 import * as Font from 'expo-font';
 import { Audio } from 'expo-av';
 import { Image } from 'react-native';
+import { AudioAssets } from './dynamicAssetLoader';
 
 // Define essential assets that need to be preloaded
 const imageAssets = {
   adaptiveIcon: require('../../assets/adaptive-icon.png'),
   icon: require('../../assets/icon.png'),
   splashIcon: require('../../assets/splash-icon.png'),
-};
-
-const audioAssets = {
-  anxietyCrusher: require('../../assets/audio/11-Minute Anxiety Crusher.mp3'),
-  emergencyReset: require('../../assets/audio/3-Minute Emergency Reset.mp3'),
-  deepProgramming: require('../../assets/audio/30-Minute Deep Reality Programming.mp3'),
-  focusField: require('../../assets/audio/focus-field.mp3'),
-  sleepWave: require('../../assets/audio/sleep-wave.mp3'),
-  successPattern: require('../../assets/audio/success-pattern.mp3'),
 };
 
 const fontAssets = {
@@ -37,9 +29,27 @@ const cacheImages = async (images: any[]) => {
   await Promise.all(promises);
 };
 
-// Preload audio
-const cacheAudio = async (audioFiles: any[]) => {
-  const promises = audioFiles.map((audio) => Audio.Sound.createAsync(audio));
+// Preload audio with duration calculation
+const cacheAudio = async (audioAssets: typeof AudioAssets) => {
+  const promises = Object.values(audioAssets).map(async (audio) => {
+    try {
+      const { sound, status } = await Audio.Sound.createAsync(audio.module, {}, null, true);
+      
+      // Update the duration in our audio assets
+      if (status.isLoaded) {
+        audio.duration = status.durationMillis || 0;
+      }
+      
+      // Unload the sound to free up memory
+      await sound.unloadAsync();
+      
+      return status;
+    } catch (error) {
+      console.warn(`Failed to load audio: ${audio.name}`, error);
+      return null;
+    }
+  });
+
   await Promise.all(promises);
 };
 
@@ -62,7 +72,7 @@ export const preloadAssets = async (
     onProgress?.(completedSteps / totalSteps);
 
     // Preload audio
-    await cacheAudio(Object.values(audioAssets));
+    await cacheAudio(AudioAssets);
     completedSteps++;
     onProgress?.(completedSteps / totalSteps);
 
@@ -80,6 +90,6 @@ export const preloadAssets = async (
 // Export asset references for use in the app
 export const Assets = {
   images: imageAssets,
-  audio: audioAssets,
+  audio: AudioAssets,
   fonts: fontAssets,
 };
