@@ -117,17 +117,18 @@ export class RealityWaveGenerator {
     }
   };
 
-  async startRealityWave(track: AudioTrackAccess, resumeFromLastPosition: boolean = false): Promise<void> {
+  async startRealityWave(track: AudioTrackAccess, shouldPlay: boolean = false): Promise<void> {
     try {
-      // If we're already playing this track and want to resume
-      if (this.sound && this.currentTrack?.id === track.id && resumeFromLastPosition) {
+      // If we're already playing this track
+      if (this.sound && this.currentTrack?.id === track.id) {
         await this.sound.setStatusAsync({ 
-          shouldPlay: true,
-          positionMillis: this.lastPosition 
+          shouldPlay,
+          positionMillis: 0
         });
         return;
       }
 
+      // Cleanup previous sound
       await this.cleanupSound();
 
       const audioSource = TRACK_AUDIO_MAP[track.id];
@@ -135,11 +136,12 @@ export class RealityWaveGenerator {
         throw new Error(`No audio source found for track: ${track.id}`);
       }
 
+      // Create and load the new sound
       const { sound } = await Audio.Sound.createAsync(
         audioSource,
         { 
-          shouldPlay: true,
-          positionMillis: resumeFromLastPosition ? this.lastPosition : 0 
+          shouldPlay,  
+          positionMillis: 0
         },
         this.handlePlaybackStatusUpdate
       );
