@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 import { MainNavigator } from './MainNavigator';
 import { withLazyLoading } from '../utils/lazyLoad';
+import { preloadAssets } from '../utils/assetLoader';
 
 const Stack = createNativeStackNavigator();
 const ONBOARDING_COMPLETE_KEY = '@anxiety_crush:onboarding_complete';
@@ -19,42 +20,42 @@ const FORCE_ONBOARDING = true;
 
 export const AppNavigator: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   useEffect(() => {
-    checkOnboardingStatus();
+    const initializeApp = async () => {
+      try {
+        // Start preloading assets
+        const assetLoadPromise = preloadAssets((progress) => {
+          setLoadingProgress(progress);
+        });
+
+        // Check onboarding status
+        const onboardingPromise = AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
+
+        // Wait for both operations to complete
+        const [_, onboardingComplete] = await Promise.all([
+          assetLoadPromise,
+          onboardingPromise
+        ]);
+
+        setAssetsLoaded(true);
+        setShowOnboarding(FORCE_ONBOARDING || !onboardingComplete);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error initializing app:', error);
+        setIsLoading(false);
+      }
+    };
+
+    initializeApp();
   }, []);
 
-  const checkOnboardingStatus = async () => {
-    try {
-      if (FORCE_ONBOARDING) {
-        // Clear onboarding status for development
-        await AsyncStorage.removeItem(ONBOARDING_COMPLETE_KEY);
-        setHasCompletedOnboarding(false);
-      } else {
-        const value = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
-        setHasCompletedOnboarding(value === 'true');
-      }
-    } catch (error) {
-      console.error('Error checking onboarding status:', error);
-      setHasCompletedOnboarding(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOnboardingComplete = async () => {
-    try {
-      await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
-      setHasCompletedOnboarding(true);
-    } catch (error) {
-      console.error('Error saving onboarding status:', error);
-    }
-  };
-
-  if (isLoading) {
+  if (isLoading || !assetsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
@@ -63,9 +64,9 @@ export const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!hasCompletedOnboarding ? (
+        {!showOnboarding ? (
           <Stack.Screen name="Onboarding">
-            {props => <OnboardingScreen {...props} onComplete={handleOnboardingComplete} />}
+            {props => <OnboardingScreen {...props} onComplete={() => setShowOnboarding(false)} />}
           </Stack.Screen>
         ) : (
           <>
@@ -84,3 +85,12 @@ export const AppNavigator: React.FC = () => {
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background
+  }
+});
