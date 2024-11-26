@@ -234,11 +234,47 @@ const SessionPlayer: React.FC = () => {
       } else {
         await realityWaveGenerator.pauseRealityWave();
         setIsPlaying(false);
+
+        // Record session when paused if significant progress was made (>80%)
+        if (progress >= 0.8) {
+          const sessionRecord = {
+            id: `${selectedTrack.id}_${Date.now()}`,
+            trackId: selectedTrack.id,
+            startTime: new Date().toISOString(),
+            duration: sessionTime,
+            type: selectedTrack.type || 'regular',
+          };
+          await metricsService.recordSession(sessionRecord);
+        }
       }
     } catch (error) {
       console.error('Error playing/pausing audio:', error);
     }
-  }, [isPlaying, realityWaveGenerator, selectedTrack]);
+  }, [isPlaying, realityWaveGenerator, selectedTrack, progress, sessionTime]);
+
+  // Handle session completion
+  useEffect(() => {
+    if (progress >= 0.99 && isPlaying) {
+      const completeSession = async () => {
+        try {
+          await realityWaveGenerator.pauseRealityWave();
+          setIsPlaying(false);
+
+          const sessionRecord = {
+            id: `${selectedTrack.id}_${Date.now()}`,
+            trackId: selectedTrack.id,
+            startTime: new Date().toISOString(),
+            duration: sessionTime,
+            type: selectedTrack.type || 'regular',
+          };
+          await metricsService.recordSession(sessionRecord);
+        } catch (error) {
+          console.error('Error completing session:', error);
+        }
+      };
+      completeSession();
+    }
+  }, [progress, isPlaying, selectedTrack, sessionTime]);
 
   // Show upgrade dialog
   const showUpgradeDialog = useCallback((track: AudioTrackAccess) => {

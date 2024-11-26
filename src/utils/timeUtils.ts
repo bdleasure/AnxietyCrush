@@ -6,17 +6,20 @@ export const formatTime = (milliseconds: number): string => {
 };
 
 export const formatDuration = (seconds: number): string => {
+  // Round the seconds to avoid floating point numbers
+  seconds = Math.round(seconds);
+  
   if (seconds < 60) {
     return `${seconds}s`;
   } else if (seconds < 3600) {
     const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
+    const remainingSeconds = Math.round(seconds % 60);
     return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
   } else {
     const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    if (minutes > 0) {
-      return `${hours}h ${minutes}m`;
+    const remainingMinutes = Math.floor((seconds % 3600) / 60);
+    if (remainingMinutes > 0) {
+      return `${hours}h ${remainingMinutes}m`;
     }
     return `${hours}h`;
   }

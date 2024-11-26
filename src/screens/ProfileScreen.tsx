@@ -40,8 +40,8 @@ const ProfileScreen: React.FC<Props> = () => {
     setAchievements(loadedAchievements);
     setMetrics({
       totalListeningTime: userMetrics.totalListeningTime || 0,
-      averageSessionLength: userMetrics.sessionsCompleted 
-        ? Math.round(userMetrics.totalListeningTime / userMetrics.sessionsCompleted) 
+      averageSessionLength: userMetrics.sessionsCompleted > 0
+        ? Math.round(userMetrics.totalListeningTime / userMetrics.sessionsCompleted)
         : 0,
       bestStreak: userMetrics.bestStreak || 0,
       realityScore: userMetrics.realityScore || 0,
