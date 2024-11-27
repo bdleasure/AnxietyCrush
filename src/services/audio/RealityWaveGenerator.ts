@@ -8,19 +8,19 @@ const AUDIO_SOURCES = {
   anxietyCrusher: require('../../../assets/audio/11-Minute Anxiety Crusher.mp3'),
   emergencyReset: require('../../../assets/audio/3-Minute Emergency Reset.mp3'),
   deepProgramming: require('../../../assets/audio/30-Minute Deep Reality Programming.mp3'),
-  successPattern: require('../../../assets/audio/success-pattern.mp3'),
-  focusField: require('../../../assets/audio/focus-field.mp3'),
-  sleepWave: require('../../../assets/audio/sleep-wave.mp3'),
+  successField: require('../../../assets/audio/success-field-generator.mp3'),
+  morningField: require('../../../assets/audio/morning-reality-field.mp3'),
+  eveningIntegration: require('../../../assets/audio/evening-integration.mp3'),
 } as const;
 
 // Map track IDs to audio sources
 const TRACK_AUDIO_MAP: Record<string, number> = {
-  'anxiety-relief': AUDIO_SOURCES.anxietyCrusher,
+  'anxiety-crusher': AUDIO_SOURCES.anxietyCrusher,
   'emergency-reset': AUDIO_SOURCES.emergencyReset,
   'deep-reality': AUDIO_SOURCES.deepProgramming,
-  'success-pattern': AUDIO_SOURCES.successPattern,
-  'focus-field': AUDIO_SOURCES.focusField,
-  'sleep-wave': AUDIO_SOURCES.sleepWave,
+  'success-field': AUDIO_SOURCES.successField,
+  'morning-field': AUDIO_SOURCES.morningField,
+  'evening-integration': AUDIO_SOURCES.eveningIntegration,
 };
 
 export interface AudioTrack {
@@ -35,9 +35,9 @@ export interface AudioTrack {
 
 export const AVAILABLE_TRACKS: AudioTrack[] = [
   {
-    id: 'anxiety-relief',
+    id: 'anxiety-crusher',
     name: 'Anxiety Crusher™',
-    description: 'Transform anxiety with our primary Reality Wave session',
+    description: 'Transform anxiety into reality-bending power',
     duration: 11,
     type: SessionType.ANXIETY_CRUSHER,
     frequency: 10,
@@ -46,20 +46,47 @@ export const AVAILABLE_TRACKS: AudioTrack[] = [
   {
     id: 'emergency-reset',
     name: 'Emergency Reset™',
-    description: 'Quick anxiety relief for urgent situations',
+    description: 'Quick anxiety pattern interrupt',
     duration: 3,
     type: SessionType.EMERGENCY_RESET,
-    frequency: 10,
+    frequency: 12,
     audioSource: AUDIO_SOURCES.emergencyReset
   },
   {
     id: 'deep-reality',
     name: 'Deep Reality Programming™',
-    description: 'Extended session for deep anxiety transformation',
+    description: 'Overnight transformation protocol',
     duration: 30,
-    type: SessionType.DEEP_PROGRAMMING,
-    frequency: 10,
+    type: SessionType.DEEP_REALITY,
+    frequency: 8,
     audioSource: AUDIO_SOURCES.deepProgramming
+  },
+  {
+    id: 'success-field',
+    name: 'Success Field Generator™',
+    description: 'Peak performance state activation',
+    duration: 15,
+    type: SessionType.SUCCESS_FIELD,
+    frequency: 15,
+    audioSource: AUDIO_SOURCES.successField
+  },
+  {
+    id: 'morning-field',
+    name: 'Morning Reality Field™',
+    description: 'Start Strong Protocol',
+    duration: 7,
+    type: SessionType.MORNING_FIELD,
+    frequency: 14,
+    audioSource: AUDIO_SOURCES.morningField
+  },
+  {
+    id: 'evening-integration',
+    name: 'Evening Integration™',
+    description: 'Sleep Field & Reality Mapping',
+    duration: 10,
+    type: SessionType.EVENING_INTEGRATION,
+    frequency: 6,
+    audioSource: AUDIO_SOURCES.eveningIntegration
   }
 ];
 

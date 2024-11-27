@@ -10,7 +10,7 @@ import SessionPlayer from '../screens/SessionPlayer';  // Direct import for init
 const Tab = createBottomTabNavigator();
 
 const TAB_ICON = {
-  Sessions: {
+  Audio: {
     active: 'radio',
     inactive: 'radio-outline',
   },
@@ -55,12 +55,12 @@ export const MainNavigator = () => {
         }}
       >
         <Tab.Screen 
-          name="Sessions" 
+          name="Audio" 
           component={SessionPlayer}
           options={{
             tabBarIcon: ({ focused, color, size }) => (
               <Ionicons 
-                name={focused ? TAB_ICON.Sessions.active : TAB_ICON.Sessions.inactive} 
+                name={focused ? TAB_ICON.Audio.active : TAB_ICON.Audio.inactive} 
                 size={size} 
                 color={color} 
               />

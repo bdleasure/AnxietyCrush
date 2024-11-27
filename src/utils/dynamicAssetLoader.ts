@@ -33,17 +33,17 @@ const audioFiles = {
     filename: '30-Minute Deep Reality Programming.mp3',
     module: require('../../assets/audio/30-Minute Deep Reality Programming.mp3'),
   },
-  focusField: {
-    filename: 'focus-field.mp3',
-    module: require('../../assets/audio/focus-field.mp3'),
+  morningField: {
+    filename: 'morning-reality-field.mp3',
+    module: require('../../assets/audio/morning-reality-field.mp3'),
   },
-  sleepWave: {
-    filename: 'sleep-wave.mp3',
-    module: require('../../assets/audio/sleep-wave.mp3'),
+  eveningIntegration: {
+    filename: 'evening-integration.mp3',
+    module: require('../../assets/audio/evening-integration.mp3'),
   },
-  successPattern: {
-    filename: 'success-pattern.mp3',
-    module: require('../../assets/audio/success-pattern.mp3'),
+  successField: {
+    filename: 'success-field-generator.mp3',
+    module: require('../../assets/audio/success-field-generator.mp3'),
   },
 };
 

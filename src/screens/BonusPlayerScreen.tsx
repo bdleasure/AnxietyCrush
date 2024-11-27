@@ -87,7 +87,7 @@ export default function BonusPlayerScreen({ navigation }) {
       </ScrollView>
 
       {selectedTrack && (
-        <View style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]}>
+        <View style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]} >
           <AudioPlayer
             selectedTrack={selectedTrack}
             onTrackSelect={setSelectedTrack}
@@ -110,13 +110,13 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.textPrimary,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
     marginBottom: 16,
   },
@@ -149,17 +149,23 @@ const styles = StyleSheet.create({
   trackInfo: {
     flex: 1,
     paddingTop: 16,
+    paddingBottom: 8,
   },
   trackTitle: {
-    marginBottom: 4,
+    fontSize: 15,
+    marginBottom: 8,
     color: colors.textPrimary,
   },
   trackDuration: {
+    fontSize: 11,
     color: colors.accent,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   trackDescription: {
+    fontSize: 12,
     color: colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 12,
   },
   audioControlsContainer: {
     position: 'absolute',

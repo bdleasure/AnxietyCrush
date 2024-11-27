@@ -7,6 +7,7 @@ import {
   ScrollView,
   Dimensions,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RealityWaveGenerator } from '../services/audio/RealityWaveGenerator';
@@ -23,14 +24,24 @@ import { Card } from '../components/shared/Card';
 import { H1, H2, H3, BodyMedium, BodySmall, Label } from '../components/shared/Typography';
 import { Button } from '../components/shared/Button';
 import { useSettings } from '../contexts/SettingsContext';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
-// Pre-compute grouped tracks
-const { availableTracks, lockedTracks } = (() => ({
-  availableTracks: AUDIO_TRACKS.filter(track => featureAccess.hasAccessToTrack(track.id)),
-  lockedTracks: AUDIO_TRACKS.filter(track => !featureAccess.hasAccessToTrack(track.id))
-}))();
+// Category icons mapping
+const CATEGORY_ICONS = {
+  'Core Reality Wave': 'radio-outline',
+  'Advanced Reality Wave': 'star-outline',
+} as const;
+
+// Pre-compute grouped tracks - excluding bonus tracks
+const { availableTracks, lockedTracks } = (() => {
+  const nonBonusTracks = AUDIO_TRACKS.filter(track => track.category !== 'Bonus Reality Waves');
+  return {
+    availableTracks: nonBonusTracks.filter(track => featureAccess.hasAccessToTrack(track.id)),
+    lockedTracks: nonBonusTracks.filter(track => !featureAccess.hasAccessToTrack(track.id))
+  };
+})();
 
 // Pre-compute initial track
 const initialTrack = availableTracks[0] || AUDIO_TRACKS[0];
@@ -71,7 +82,7 @@ const SessionPlayer: React.FC = () => {
   const loadTrackDurations = useCallback(async (tracks: AudioTrackAccess[]) => {
     const durationPromises = tracks.map(async track => {
       if (trackDurations[track.id]) return { id: track.id, duration: trackDurations[track.id] }; // Use existing duration
-      
+
       try {
         const tempGenerator = new RealityWaveGenerator();
         await tempGenerator.startRealityWave(track, false);
@@ -100,17 +111,17 @@ const SessionPlayer: React.FC = () => {
   // Load track duration when track changes
   useEffect(() => {
     let mounted = true;
-    
+
     const loadTrackDuration = async () => {
       if (!selectedTrack) return;
-      
+
       try {
         setLoading(true);
         const tempGenerator = new RealityWaveGenerator();
         await tempGenerator.startRealityWave(selectedTrack, false);
         const duration = await tempGenerator.getDuration();
         await tempGenerator.stopRealityWave();
-        
+
         if (mounted) {
           setDuration(duration);
           setLoading(false);
@@ -138,13 +149,13 @@ const SessionPlayer: React.FC = () => {
         setSessionTime(Math.floor(status.positionMillis / 1000));
         setDuration(Math.floor(status.durationMillis / 1000));
         setIsPlaying(status.isPlaying);
-        
+
         // Handle track completion
         if (status.didJustFinish) {
           setIsPlaying(false);
           setProgress(0);
           setSessionTime(0);
-          
+
           // Record completed session
           if (selectedTrack && sessionTime > 10) {
             metricsService.recordSession({
@@ -174,7 +185,7 @@ const SessionPlayer: React.FC = () => {
       setSelectedTrack(track);
       setProgress(0);
       setSessionTime(0);
-      
+
       // Stop current playback if playing
       if (isPlaying) {
         await realityWaveGenerator.stopRealityWave();
@@ -243,8 +254,8 @@ const SessionPlayer: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <H1 style={styles.title}>Transform Now</H1>
-        <BodyMedium style={styles.subtitle}>Select your reality wave session</BodyMedium>
+        <H1 style={styles.title}>Transform Your Reality</H1>
+        <BodyMedium style={styles.subtitle}>Turn Anxiety into Your Greatest Asset</BodyMedium>
       </View>
 
       <ScrollView
@@ -254,11 +265,20 @@ const SessionPlayer: React.FC = () => {
       >
         {Object.entries(groupedTracks).map(([category, tracks]) => (
           <View key={category} style={styles.categorySection}>
+            <View style={styles.categoryHeader}>
+              <Ionicons 
+                name={CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS] || 'radio-outline'} 
+                size={24} 
+                color={colors.accent} 
+              />
+              <H2 style={styles.categoryTitle}>{category}</H2>
+            </View>
+            
             {tracks.map((track) => (
               <Card 
                 key={track.id} 
                 style={[styles.trackCard, { borderWidth: 0 }]}
-                isSelected={selectedTrack.id === track.id}
+                isSelected={selectedTrack?.id === track.id}
               >
                 <TouchableOpacity
                   onPress={() => handleTrackSelect(track)}
@@ -284,6 +304,11 @@ const SessionPlayer: React.FC = () => {
                     <BodyMedium style={styles.trackDescription}>
                       {track.description}
                     </BodyMedium>
+                    {track.subtitle && (
+                      <BodySmall style={styles.trackSubtitle}>
+                        {track.subtitle}
+                      </BodySmall>
+                    )}
                   </View>
                 </TouchableOpacity>
               </Card>
@@ -320,13 +345,13 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.textPrimary,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
     marginBottom: 16,
   },
@@ -338,8 +363,19 @@ const styles = StyleSheet.create({
     paddingBottom: 180,
   },
   categorySection: {
+    marginBottom: 24,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
     paddingHorizontal: 8,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginLeft: 12,
   },
   trackCard: {
     marginBottom: 16,
@@ -359,17 +395,29 @@ const styles = StyleSheet.create({
   trackInfo: {
     flex: 1,
     paddingTop: 16,
+    paddingBottom: 8,
   },
   trackTitle: {
-    marginBottom: 4,
+    fontSize: 15,
+    marginBottom: 8,
     color: colors.textPrimary,
   },
   trackDuration: {
+    fontSize: 11,
     color: colors.accent,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   trackDescription: {
+    fontSize: 12,
     color: colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  trackSubtitle: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    lineHeight: 14,
   },
   audioControlsContainer: {
     position: 'absolute',
@@ -378,7 +426,20 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: colors.background,
     paddingTop: 16,
-    zIndex: 2,
+    paddingHorizontal: 24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
 });
 
