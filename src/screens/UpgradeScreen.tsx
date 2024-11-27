@@ -43,43 +43,19 @@ const SmallBodySmall = ({ style, ...props }) => (
 
 const UpgradeScreen = () => {
   const navigation = useNavigation();
-  const { currentTier, isLoading, purchaseTier, upgradeTier, hasDailyOptimizer, purchaseDailyOptimizer } = usePurchase();
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionTier | null>(null);
-  const [processingPurchase, setProcessingPurchase] = useState(false);
+  const {
+    currentTier,
+    selectedPackages,
+    isLoading,
+    hasDailyOptimizer,
+    totalPrice,
+    togglePackageSelection,
+    purchaseSelectedPackages,
+    clearSelection,
+  } = usePurchase();
 
-  const handleSelect = useCallback((tier: SubscriptionTier) => {
-    setSelectedPlan(tier);
-  }, []);
-
-  const handleUpgrade = async () => {
-    if (!selectedPlan || processingPurchase) return;
-
-    setProcessingPurchase(true);
-    try {
-      const result = currentTier
-        ? await upgradeTier(selectedPlan)
-        : await purchaseTier(selectedPlan);
-
-      if (result.success) {
-        navigation.goBack();
-      }
-    } finally {
-      setProcessingPurchase(false);
-    }
-  };
-
-  const handleDailyOptimizer = async () => {
-    if (processingPurchase) return;
-
-    setProcessingPurchase(true);
-    try {
-      const success = await purchaseDailyOptimizer();
-      if (success) {
-        navigation.goBack();
-      }
-    } finally {
-      setProcessingPurchase(false);
-    }
+  const handlePurchase = async () => {
+    await purchaseSelectedPackages();
   };
 
   return (
@@ -92,48 +68,37 @@ const UpgradeScreen = () => {
             <SmallH2 style={styles.subtitle}> One-Time Investment, Lifetime of Peace</SmallH2>
             <SmallBodyMedium style={styles.description}>
               Take control of your anxiety today with our revolutionary reality wave technology. 
-              Choose your perfect plan below and unlock lifetime access instantly - no subscriptions, 
-              no recurring fees, just permanent transformation at your fingertips.
+              Select the packages you want and transform your life instantly.
             </SmallBodyMedium>
-            
-            <View style={styles.benefitsList}>
-              <SmallBodyMedium style={styles.benefit}> Pay once, own forever</SmallBodyMedium>
-              <SmallBodyMedium style={styles.benefit}> No hidden fees or future charges</SmallBodyMedium>
-              <SmallBodyMedium style={styles.benefit}> Instant access to premium audio sessions</SmallBodyMedium>
-              <SmallBodyMedium style={styles.benefit}> All future updates included</SmallBodyMedium>
-            </View>
-
-            <View style={styles.guaranteeBox}>
-              <SmallH3 style={styles.guaranteeTitle}>Your Journey to Peace Starts Here</SmallH3>
-              <SmallBodyMedium style={styles.guaranteeText}>
-                Join thousands who have already discovered the power of reality wave technology. 
-                Unlock your full potential with a single investment in your mental wellbeing.
-              </SmallBodyMedium>
-            </View>
           </View>
-
-          <SmallH2 style={styles.plansTitle}>Select Your Lifetime Access Plan</SmallH2>
 
           {SUBSCRIPTION_PLANS.map((plan) => (
             <View key={`plan-container-${plan.tier.toLowerCase()}`}>
               <TouchableOpacity
                 style={[
                   styles.planCard,
-                  selectedPlan === plan.tier && styles.selectedPlan,
+                  selectedPackages.has(plan.tier) && styles.selectedPlan,
                   currentTier === plan.tier && styles.currentPlan,
                 ]}
-                onPress={() => handleSelect(plan.tier)}
-                disabled={currentTier === plan.tier || processingPurchase}
+                onPress={() => togglePackageSelection(plan.tier)}
+                disabled={currentTier === plan.tier || isLoading}
               >
                 <View style={styles.planHeader}>
-                  <SmallH2 style={styles.planTitle}>{plan.name}</SmallH2>
-                  <SmallBodyLarge style={styles.planPrice}>${plan.price}</SmallBodyLarge>
+                  <View style={styles.planTitleRow}>
+                    <SmallH2 style={styles.planTitle}>{plan.name}</SmallH2>
+                    <SmallBodyLarge style={styles.planPrice}>{plan.price}</SmallBodyLarge>
+                  </View>
+                  {selectedPackages.has(plan.tier) && (
+                    <View style={styles.selectedBadge}>
+                      <SmallBodySmall style={styles.selectedText}>Selected</SmallBodySmall>
+                    </View>
+                  )}
                 </View>
                 
                 <View style={styles.planFeatures}>
                   {plan.features.map((feature, index) => (
                     <View key={index} style={styles.featureItem}>
-                      <SmallBodyMedium style={styles.featureTitle}>✓ {feature.title}</SmallBodyMedium>
+                      <SmallBodyMedium style={styles.featureTitle}> {feature.title}</SmallBodyMedium>
                       <SmallBodySmall style={styles.featureSubtitle}>{feature.subtitle}</SmallBodySmall>
                       {feature.details && (
                         <SmallBodySmall style={styles.featureDetails}>{feature.details}</SmallBodySmall>
@@ -141,26 +106,6 @@ const UpgradeScreen = () => {
                     </View>
                   ))}
                 </View>
-
-                {currentTier !== plan.tier && (
-                  <TouchableOpacity
-                    style={[
-                      styles.upgradeButton,
-                      selectedPlan === plan.tier && styles.upgradeButtonSelected,
-                      processingPurchase && styles.upgradeButtonDisabled,
-                    ]}
-                    onPress={handleUpgrade}
-                    disabled={selectedPlan !== plan.tier || processingPurchase}
-                  >
-                    {processingPurchase && selectedPlan === plan.tier ? (
-                      <ActivityIndicator color={colors.background} />
-                    ) : (
-                      <SmallBodySmall style={styles.upgradeButtonText}>
-                        {currentTier ? 'Upgrade Now' : 'Get Started'}
-                      </SmallBodySmall>
-                    )}
-                  </TouchableOpacity>
-                )}
 
                 {currentTier === plan.tier && (
                   <View style={styles.currentPlanBadge}>
@@ -171,24 +116,30 @@ const UpgradeScreen = () => {
             </View>
           ))}
 
-          {!hasDailyOptimizer && (
-            <View style={styles.dailyOptimizerCard}>
-              <SmallH3 style={styles.dailyOptimizerTitle}>Enhance Your Journey</SmallH3>
-              <SmallBodyMedium style={styles.dailyOptimizerDescription}>
-                Add morning and evening sessions to optimize your daily transformation
-              </SmallBodyMedium>
+          {selectedPackages.size > 0 && (
+            <View style={styles.purchaseSummary}>
+              <SmallH3 style={styles.summaryTitle}>Your Selection</SmallH3>
+              {Array.from(selectedPackages).map((tier) => (
+                <View key={tier} style={styles.selectedPackage}>
+                  <SmallBodyMedium>{SUBSCRIPTION_PLANS.find(p => p.tier === tier)?.name}</SmallBodyMedium>
+                  <SmallBodyMedium>{SUBSCRIPTION_PLANS.find(p => p.tier === tier)?.price}</SmallBodyMedium>
+                </View>
+              ))}
+              <View style={styles.totalRow}>
+                <SmallH3>Total</SmallH3>
+                <SmallH3>${totalPrice}</SmallH3>
+              </View>
               <TouchableOpacity
-                style={[
-                  styles.upgradeButton,
-                  processingPurchase && styles.upgradeButtonDisabled,
-                ]}
-                onPress={handleDailyOptimizer}
-                disabled={processingPurchase}
+                style={[styles.purchaseButton, isLoading && styles.purchaseButtonDisabled]}
+                onPress={handlePurchase}
+                disabled={isLoading}
               >
-                {processingPurchase ? (
+                {isLoading ? (
                   <ActivityIndicator color={colors.background} />
                 ) : (
-                  <SmallBodySmall style={styles.upgradeButtonText}>Add Daily Optimizer</SmallBodySmall>
+                  <SmallBodyMedium style={styles.purchaseButtonText}>
+                    Purchase Selected Packages
+                  </SmallBodyMedium>
                 )}
               </TouchableOpacity>
             </View>
@@ -295,6 +246,12 @@ const styles = StyleSheet.create({
   planHeader: {
     marginBottom: 16,
   },
+  planTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   planTitle: {
     marginBottom: 4,
   },
@@ -323,23 +280,17 @@ const styles = StyleSheet.create({
   featureText: {
     marginBottom: 8,
   },
-  upgradeButton: {
-    backgroundColor: colors.cardBackground,
-    paddingVertical: 12,
-    borderRadius: 25,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.accent,
-  },
-  upgradeButtonSelected: {
+  selectedBadge: {
     backgroundColor: colors.accent,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginTop: 4,
   },
-  upgradeButtonDisabled: {
-    opacity: 0.7,
-  },
-  upgradeButtonText: {
-    color: colors.textPrimary,
-    fontWeight: 'bold',
+  selectedText: {
+    color: colors.background,
+    fontWeight: '600',
   },
   currentPlanBadge: {
     position: 'absolute',
@@ -354,7 +305,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontWeight: '600',
   },
-  dailyOptimizerCard: {
+  purchaseSummary: {
     backgroundColor: colors.cardBackground,
     padding: 20,
     borderRadius: 16,
@@ -362,14 +313,39 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accent,
   },
-  dailyOptimizerTitle: {
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  dailyOptimizerDescription: {
-    textAlign: 'center',
+  summaryTitle: {
     marginBottom: 16,
-    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  selectedPackage: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 2,
+    borderTopColor: colors.accent,
+  },
+  purchaseButton: {
+    backgroundColor: colors.accent,
+    paddingVertical: 16,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  purchaseButtonDisabled: {
+    opacity: 0.7,
+  },
+  purchaseButtonText: {
+    color: colors.background,
+    fontWeight: 'bold',
   },
 });
 
