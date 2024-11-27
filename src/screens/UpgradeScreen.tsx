@@ -1,142 +1,198 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-  StyleSheet,
   View,
-  Text,
   ScrollView,
-  TouchableOpacity,
+  StyleSheet,
   Platform,
-  Alert,
-  SafeAreaView,
-  Dimensions,
+  TouchableOpacity,
+  ActivityIndicator,
+  Text,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { H1, H2, H3, BodyMedium, BodySmall, BodyLarge } from '../components/Typography';
 import { colors } from '../theme/colors';
+import { SUBSCRIPTION_PLANS } from '../services/subscription/plans';
 import { SubscriptionTier } from '../services/subscription/types';
-import { SubscriptionPlan, SUBSCRIPTION_PLANS } from '../services/subscription/plans';
+import { usePurchase } from '../contexts/PurchaseContext';
+import { useNavigation } from '@react-navigation/native';
 
-const { width } = Dimensions.get('window');
+// Create smaller versions of Typography components for the upgrade screen
+const SmallH1 = ({ style, ...props }) => (
+  <H1 {...props} style={[{ fontSize: 22 }, style]} />
+);
 
-const PlanCard = memo(({ plan, isSelected, onSelect, onUpgrade }: { plan: SubscriptionPlan, isSelected: boolean, onSelect: (tier: SubscriptionTier) => void, onUpgrade: (plan: SubscriptionPlan) => void }) => {
-  const cardId = `plan-${plan.tier.toLowerCase()}`;
-  
-  return (
-    <TouchableOpacity
-      style={[styles.planCard, isSelected && styles.selectedCard]}
-      onPress={() => onSelect(plan.tier)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.cardContent}>
-        {plan.popular && (
-          <View style={styles.popularBadge}>
-            <Text style={styles.popularText}>Most Popular</Text>
-          </View>
-        )}
+const SmallH2 = ({ style, ...props }) => (
+  <H2 {...props} style={[{ fontSize: 19 }, style]} />
+);
 
-        <View style={styles.planHeader}>
-          <Text style={styles.planName}>{plan.name}</Text>
-          <Text style={styles.planPrice}>{plan.price}</Text>
-        </View>
+const SmallH3 = ({ style, ...props }) => (
+  <H3 {...props} style={[{ fontSize: 16 }, style]} />
+);
 
-        <Text style={styles.planDescription}>{plan.description}</Text>
+const SmallBodyLarge = ({ style, ...props }) => (
+  <BodyLarge {...props} style={[{ fontSize: 15 }, style]} />
+);
 
-        <View style={styles.featuresList}>
-          {plan.features.map((feature, index) => (
-            <View 
-              key={`${cardId}-feature-${index}`}
-              style={styles.featureItem}
-            >
-              <Ionicons
-                name={feature.included ? 'checkmark-circle' : 'close-circle'}
-                size={20}
-                color={feature.included ? colors.accent : colors.textSecondary}
-                style={styles.featureIcon}
-              />
-              <View style={styles.featureTextContainer}>
-                <Text style={styles.featureTitle}>{feature.title}</Text>
-                <Text style={styles.featureSubtitle}>{feature.subtitle}</Text>
-                {feature.details && (
-                  <Text style={styles.featureDetails}>{feature.details}</Text>
-                )}
-                {feature.technical && (
-                  <Text style={styles.featureTechnical}>{feature.technical}</Text>
-                )}
-              </View>
-            </View>
-          ))}
-        </View>
+const SmallBodyMedium = ({ style, ...props }) => (
+  <BodyMedium {...props} style={[{ fontSize: 13 }, style]} />
+);
 
-        <TouchableOpacity
-          style={[styles.upgradeButton, isSelected && styles.selectedButton]}
-          onPress={() => onUpgrade(plan)}
-        >
-          <Text style={styles.upgradeButtonText}>
-            {isSelected ? 'Start Your Reality Shift' : 'Select Plan'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
-});
+const SmallBodySmall = ({ style, ...props }) => (
+  <BodySmall {...props} style={[{ fontSize: 11 }, style]} />
+);
 
-const UpgradeScreen: React.FC = () => {
+const UpgradeScreen = () => {
+  const navigation = useNavigation();
+  const { currentTier, isLoading, purchaseTier, upgradeTier, hasDailyOptimizer, purchaseDailyOptimizer } = usePurchase();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionTier | null>(null);
-
-  const handleUpgrade = useCallback((plan: SubscriptionPlan) => {
-    Alert.alert(
-      'Coming Soon',
-      'In-app purchases will be available in the next update. Stay tuned!',
-      [{ text: 'OK' }]
-    );
-  }, []);
+  const [processingPurchase, setProcessingPurchase] = useState(false);
 
   const handleSelect = useCallback((tier: SubscriptionTier) => {
     setSelectedPlan(tier);
   }, []);
 
+  const handleUpgrade = async () => {
+    if (!selectedPlan || processingPurchase) return;
+
+    setProcessingPurchase(true);
+    try {
+      const result = currentTier
+        ? await upgradeTier(selectedPlan)
+        : await purchaseTier(selectedPlan);
+
+      if (result.success) {
+        navigation.goBack();
+      }
+    } finally {
+      setProcessingPurchase(false);
+    }
+  };
+
+  const handleDailyOptimizer = async () => {
+    if (processingPurchase) return;
+
+    setProcessingPurchase(true);
+    try {
+      const success = await purchaseDailyOptimizer();
+      if (success) {
+        navigation.goBack();
+      }
+    } finally {
+      setProcessingPurchase(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Transform Your Reality</Text>
-        <Text style={styles.subtitle}>Turn Anxiety into Your Greatest Asset</Text>
-      </View>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.content}>
+          <SmallH1 style={styles.title}>Transform Your Life</SmallH1>
+          
+          <View style={styles.valueProposition}>
+            <SmallH2 style={styles.subtitle}> One-Time Investment, Lifetime of Peace</SmallH2>
+            <SmallBodyMedium style={styles.description}>
+              Take control of your anxiety today with our revolutionary reality wave technology. 
+              Choose your perfect plan below and unlock lifetime access instantly - no subscriptions, 
+              no recurring fees, just permanent transformation at your fingertips.
+            </SmallBodyMedium>
+            
+            <View style={styles.benefitsList}>
+              <SmallBodyMedium style={styles.benefit}> Pay once, own forever</SmallBodyMedium>
+              <SmallBodyMedium style={styles.benefit}> No hidden fees or future charges</SmallBodyMedium>
+              <SmallBodyMedium style={styles.benefit}> Instant access to premium audio sessions</SmallBodyMedium>
+              <SmallBodyMedium style={styles.benefit}> All future updates included</SmallBodyMedium>
+            </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.introSection}>
-          <Text style={styles.introText}>
-            Reality Wave technology helps you flip the switch from:
-          </Text>
-          <View style={styles.transformationList}>
-            <Text style={styles.transformItem}>• Overthinking to Clarity</Text>
-            <Text style={styles.transformItem}>• Anxiety to Calm</Text>
-            <Text style={styles.transformItem}>• Chaos to Control</Text>
-            <Text style={styles.transformItem}>• Stress to Success</Text>
+            <View style={styles.guaranteeBox}>
+              <SmallH3 style={styles.guaranteeTitle}>Your Journey to Peace Starts Here</SmallH3>
+              <SmallBodyMedium style={styles.guaranteeText}>
+                Join thousands who have already discovered the power of reality wave technology. 
+                Unlock your full potential with a single investment in your mental wellbeing.
+              </SmallBodyMedium>
+            </View>
           </View>
-        </View>
 
-        {SUBSCRIPTION_PLANS.map((plan) => (
-          <View key={`plan-container-${plan.tier.toLowerCase()}`}>
-            <PlanCard
-              plan={plan}
-              isSelected={selectedPlan === plan.tier}
-              onSelect={handleSelect}
-              onUpgrade={handleUpgrade}
-            />
-          </View>
-        ))}
+          <SmallH2 style={styles.plansTitle}>Select Your Lifetime Access Plan</SmallH2>
 
-        <View style={styles.guaranteeSection}>
-          <Ionicons name="shield-checkmark" size={24} color={colors.accent} />
-          <Text style={styles.guaranteeText}>
-            30-Day Reality Transformation Guarantee
-          </Text>
-          <Text style={styles.guaranteeDescription}>
-            Feel the power of anxiety transformed into achievement, or get double your money back
-          </Text>
+          {SUBSCRIPTION_PLANS.map((plan) => (
+            <View key={`plan-container-${plan.tier.toLowerCase()}`}>
+              <TouchableOpacity
+                style={[
+                  styles.planCard,
+                  selectedPlan === plan.tier && styles.selectedPlan,
+                  currentTier === plan.tier && styles.currentPlan,
+                ]}
+                onPress={() => handleSelect(plan.tier)}
+                disabled={currentTier === plan.tier || processingPurchase}
+              >
+                <View style={styles.planHeader}>
+                  <SmallH2 style={styles.planTitle}>{plan.name}</SmallH2>
+                  <SmallBodyLarge style={styles.planPrice}>${plan.price}</SmallBodyLarge>
+                </View>
+                
+                <View style={styles.planFeatures}>
+                  {plan.features.map((feature, index) => (
+                    <View key={index} style={styles.featureItem}>
+                      <SmallBodyMedium style={styles.featureTitle}>✓ {feature.title}</SmallBodyMedium>
+                      <SmallBodySmall style={styles.featureSubtitle}>{feature.subtitle}</SmallBodySmall>
+                      {feature.details && (
+                        <SmallBodySmall style={styles.featureDetails}>{feature.details}</SmallBodySmall>
+                      )}
+                    </View>
+                  ))}
+                </View>
+
+                {currentTier !== plan.tier && (
+                  <TouchableOpacity
+                    style={[
+                      styles.upgradeButton,
+                      selectedPlan === plan.tier && styles.upgradeButtonSelected,
+                      processingPurchase && styles.upgradeButtonDisabled,
+                    ]}
+                    onPress={handleUpgrade}
+                    disabled={selectedPlan !== plan.tier || processingPurchase}
+                  >
+                    {processingPurchase && selectedPlan === plan.tier ? (
+                      <ActivityIndicator color={colors.background} />
+                    ) : (
+                      <SmallBodySmall style={styles.upgradeButtonText}>
+                        {currentTier ? 'Upgrade Now' : 'Get Started'}
+                      </SmallBodySmall>
+                    )}
+                  </TouchableOpacity>
+                )}
+
+                {currentTier === plan.tier && (
+                  <View style={styles.currentPlanBadge}>
+                    <SmallBodySmall style={styles.currentPlanText}>Current Plan</SmallBodySmall>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          {!hasDailyOptimizer && (
+            <View style={styles.dailyOptimizerCard}>
+              <SmallH3 style={styles.dailyOptimizerTitle}>Enhance Your Journey</SmallH3>
+              <SmallBodyMedium style={styles.dailyOptimizerDescription}>
+                Add morning and evening sessions to optimize your daily transformation
+              </SmallBodyMedium>
+              <TouchableOpacity
+                style={[
+                  styles.upgradeButton,
+                  processingPurchase && styles.upgradeButtonDisabled,
+                ]}
+                onPress={handleDailyOptimizer}
+                disabled={processingPurchase}
+              >
+                {processingPurchase ? (
+                  <ActivityIndicator color={colors.background} />
+                ) : (
+                  <SmallBodySmall style={styles.upgradeButtonText}>Add Daily Optimizer</SmallBodySmall>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -148,119 +204,124 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    padding: 20,
-    paddingTop: Platform.OS === 'ios' ? 20 : 40,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 10,
-    color: colors.textSecondary,
-  },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 20,
+  content: {
+    padding: 24,
     paddingBottom: 40,
   },
-  planCard: {
-    marginBottom: 20,
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: colors.cardBackground,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+  title: {
+    textAlign: 'center',
+    marginBottom: 24,
   },
-  selectedCard: {
-    transform: [{ scale: 1.02 }],
+  valueProposition: {
+    marginBottom: 32,
+    backgroundColor: colors.cardBackground,
+    padding: 20,
+    borderRadius: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  subtitle: {
+    color: colors.accent,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  description: {
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  benefitsList: {
+    marginBottom: 24,
+  },
+  benefit: {
+    marginBottom: 12,
+    paddingLeft: 8,
+  },
+  guaranteeBox: {
+    backgroundColor: colors.secondary,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  guaranteeTitle: {
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  guaranteeText: {
+    textAlign: 'center',
+  },
+  plansTitle: {
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  planCard: {
+    marginBottom: 16,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  selectedPlan: {
     borderColor: colors.accent,
     borderWidth: 2,
   },
-  cardContent: {
-    padding: 20,
-  },
-  popularBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: colors.accent,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 8,
-    zIndex: 1,
-  },
-  popularText: {
-    color: colors.textPrimary,
-    fontSize: 9,
-    fontWeight: 'bold',
+  currentPlan: {
+    opacity: 0.8,
   },
   planHeader: {
-    marginBottom: 12,
-    marginTop: 24,
+    marginBottom: 16,
   },
-  planName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
+  planTitle: {
     marginBottom: 4,
-    marginTop: 8,
   },
   planPrice: {
-    fontSize: 19,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
+    color: colors.accent,
   },
-  planDescription: {
-    fontSize: 9,
-    color: colors.textSecondary,
-    marginBottom: 20,
-  },
-  featuresList: {
+  planFeatures: {
     marginBottom: 20,
   },
   featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  featureIcon: {
-    marginRight: 8,
-  },
-  featureTextContainer: {
-    flex: 1,
-    marginLeft: 12,
+    marginBottom: 16,
   },
   featureTitle: {
-    fontSize: 12,
+    marginBottom: 4,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   featureSubtitle: {
-    fontSize: 11,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginBottom: 4,
   },
   featureDetails: {
-    fontSize: 10,
     color: colors.textSecondary,
-    marginTop: 4,
+    fontSize: 12,
+    fontStyle: 'italic',
   },
-  featureTechnical: {
-    fontSize: 9,
-    color: colors.textSecondary,
-    marginTop: 2,
+  featureText: {
+    marginBottom: 8,
   },
   upgradeButton: {
     backgroundColor: colors.cardBackground,
@@ -270,53 +331,45 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accent,
   },
-  selectedButton: {
+  upgradeButtonSelected: {
     backgroundColor: colors.accent,
+  },
+  upgradeButtonDisabled: {
+    opacity: 0.7,
   },
   upgradeButtonText: {
     color: colors.textPrimary,
-    fontSize: 10,
     fontWeight: 'bold',
   },
-  guaranteeSection: {
-    alignItems: 'center',
-    marginTop: 20,
-    padding: 20,
+  currentPlanBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: colors.accent,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  currentPlanText: {
+    color: colors.background,
+    fontWeight: '600',
+  },
+  dailyOptimizerCard: {
     backgroundColor: colors.cardBackground,
-    borderRadius: 15,
+    padding: 20,
+    borderRadius: 16,
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: colors.accent,
   },
-  guaranteeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginTop: 12,
+  dailyOptimizerTitle: {
+    textAlign: 'center',
     marginBottom: 8,
   },
-  guaranteeDescription: {
-    fontSize: 9,
+  dailyOptimizerDescription: {
+    textAlign: 'center',
+    marginBottom: 16,
     color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  introSection: {
-    padding: 20,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 15,
-    marginBottom: 20,
-  },
-  introText: {
-    fontSize: 16,
-    color: colors.textPrimary,
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  transformationList: {
-    paddingLeft: 20,
-  },
-  transformItem: {
-    fontSize: 16,
-    color: colors.textPrimary,
-    marginBottom: 8,
-    fontWeight: '500',
   },
 });
 
