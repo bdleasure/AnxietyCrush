@@ -5,14 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MetricCard } from '../components/MetricCard';
 import { metricsService } from '../services/metrics/metricsService';
 import { UserMetrics } from '../services/metrics/types';
-import { useNavigation } from '@react-navigation/native';
 import { LineChart } from 'react-native-chart-kit';
 import { BlurView } from 'expo-blur';
 
 const { width } = Dimensions.get('window');
 
-const ProgressScreen = () => {
-  const navigation = useNavigation();
+const ProgressScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [metrics, setMetrics] = useState<UserMetrics>({
     sessionsCompleted: 0,
     currentStreak: 0,

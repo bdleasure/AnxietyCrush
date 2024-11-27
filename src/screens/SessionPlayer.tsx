@@ -20,7 +20,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { AudioControls } from '../components/AudioControls';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { metricsService } from '../services/metrics/metricsService';
-import { useNavigation } from '@react-navigation/native';
 import { Card } from '../components/shared/Card';
 import { H1, H2, H3, BodyMedium, BodySmall, Label } from '../components/shared/Typography';
 import { Button } from '../components/shared/Button';
@@ -56,7 +55,7 @@ const { availableTracks, lockedTracks } = (() => {
 // Pre-compute initial track
 const initialTrack = availableTracks[0] || featureAccess.getAvailableTracks()[0];
 
-const SessionPlayer: React.FC = () => {
+const SessionPlayer: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { settings } = useSettings();
   const [isPlaying, setIsPlaying] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
@@ -68,7 +67,6 @@ const SessionPlayer: React.FC = () => {
   const [trackDurations, setTrackDurations] = useState<Record<string, number>>({});
   const [isSeeking, setIsSeeking] = useState(false);
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
 
   // Group tracks by category - memoized
   const groupedTracks = useMemo(() => {

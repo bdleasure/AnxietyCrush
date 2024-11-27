@@ -26,7 +26,26 @@
       "package": "com.anxietycrush.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "AnxietyCrush",
+      "shortName": "AnxietyCrush",
+      "lang": "en",
+      "scope": "/",
+      "themeColor": "#ffffff",
+      "backgroundColor": "#ffffff",
+      "startUrl": "/?source=pwa",
+      "display": "standalone",
+      "orientation": "portrait",
+      "relatedApplications": [],
+      "preferRelatedApplications": false,
+      "description": "Anxiety management app to help you crush anxiety",
+      "bundler": "metro",
+      "output": "single",
+      "optimization": {
+        "minify": true,
+        "splitChunks": true,
+        "treeshake": true
+      }
     },
     "plugins": [
       [
@@ -37,7 +56,9 @@
       ]
     ],
     "experiments": {
-      "tsconfigPaths": true
-    }
+      "tsconfigPaths": true,
+      "typedRoutes": true
+    },
+    "scheme": "anxiety-crush"
   }
 }
