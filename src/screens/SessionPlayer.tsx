@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { RealityWaveGenerator } from '../services/audio/RealityWaveGenerator';
 import { colors } from '../theme/colors';
 import { BlurView } from 'expo-blur';
-import { featureAccess, AUDIO_TRACKS } from '../services/subscription/featureAccess';
+import { featureAccess } from '../services/subscription/featureAccess';
 import { AudioTrackAccess, SubscriptionTier } from '../services/subscription/types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AudioControls } from '../components/AudioControls';
@@ -25,6 +25,7 @@ import { H1, H2, H3, BodyMedium, BodySmall, Label } from '../components/shared/T
 import { Button } from '../components/shared/Button';
 import { useSettings } from '../contexts/SettingsContext';
 import { Ionicons } from '@expo/vector-icons';
+import { AUDIO_TRACKS } from '../services/subscription/featureAccess';
 
 const { width, height } = Dimensions.get('window');
 
@@ -36,10 +37,10 @@ const CATEGORY_ICONS = {
 
 // Pre-compute grouped tracks - excluding bonus tracks
 const { availableTracks, lockedTracks } = (() => {
-  const nonBonusTracks = AUDIO_TRACKS.filter(track => track.category !== 'Bonus Reality Waves');
+  const allTracks = AUDIO_TRACKS.filter(track => track.category !== 'Bonus Reality Waves');
   return {
-    availableTracks: nonBonusTracks.filter(track => featureAccess.hasAccessToTrack(track.id)),
-    lockedTracks: nonBonusTracks.filter(track => !featureAccess.hasAccessToTrack(track.id))
+    availableTracks: allTracks.filter(track => featureAccess.hasAccessToTrack(track.id)),
+    lockedTracks: allTracks.filter(track => !featureAccess.hasAccessToTrack(track.id))
   };
 })();
 
@@ -297,17 +298,20 @@ const SessionPlayer: React.FC = () => {
                   <View style={styles.trackInfo}>
                     <H3 style={styles.trackTitle}>{track.name}</H3>
                     <BodySmall style={styles.trackDuration}>
-                      {duration ? 
-                        `${Math.floor(duration / 60)} minutes ${Math.floor(duration % 60)} seconds` :
-                        `${track.duration} minutes`}
+                      {Math.floor(track.duration)} minutes
                     </BodySmall>
                     <BodyMedium style={styles.trackDescription}>
                       {track.description}
                     </BodyMedium>
-                    {track.subtitle && (
-                      <BodySmall style={styles.trackSubtitle}>
-                        {track.subtitle}
-                      </BodySmall>
+                    {track.detailedDescription && (
+                      <BodyMedium style={styles.detailedDescription}>
+                        {track.detailedDescription}
+                      </BodyMedium>
+                    )}
+                    {track.technicalDetails && (
+                      <BodyMedium style={styles.technicalDetails}>
+                        {track.technicalDetails}
+                      </BodyMedium>
                     )}
                   </View>
                 </TouchableOpacity>
@@ -409,15 +413,30 @@ const styles = StyleSheet.create({
   },
   trackDescription: {
     fontSize: 12,
-    color: colors.textSecondary,
-    lineHeight: 18,
+    color: colors.textPrimary,
     marginBottom: 12,
   },
-  trackSubtitle: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-    lineHeight: 14,
+  detailedDescription: {
+    fontSize: 12,
+    color: colors.textPrimary,
+    marginBottom: 12,
+  },
+  technicalDetails: {
+    fontSize: 12,
+    color: colors.textPrimary,
+    marginBottom: 8,
+  },
+  technicalContainer: {
+    marginTop: 4,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  technicalLabel: {
+    fontSize: 12,
+    color: colors.accent,
+    marginBottom: 4,
+    fontWeight: '600',
   },
   audioControlsContainer: {
     position: 'absolute',

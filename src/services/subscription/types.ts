@@ -24,8 +24,11 @@ export interface AudioTrackAccess {
   id: string;
   name: string;
   description: string;
+  detailedDescription?: string;
+  technicalDetails?: string;
   subtitle: string;
   duration: number;
   requiredTier: SubscriptionTier;
   category: string;
+  audioUrl: string;
 }

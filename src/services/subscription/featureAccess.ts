@@ -9,20 +9,26 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
   {
     id: 'anxiety-crusher',
     name: 'Anxiety Crusher™',
-    description: 'Transform anxiety into reality-bending power with our signature Reality Wave frequency',
-    subtitle: 'Our signature Reality Wave frequency (10 Hz Alpha) helps rewire your anxiety response',
+    description: 'Transform anxiety into reality-bending power',
+    detailedDescription: 'Our signature Reality Wave frequency (10 Hz Alpha) helps rewire your anxiety response into focused clarity. Perfect for daily transformation.',
+    technicalDetails: 'Precision-engineered Alpha frequency with optional ambient background',
+    subtitle: 'Primary Reality Wave Technology',
     duration: 11,
     requiredTier: SubscriptionTier.FREE,  // Base package - already unlocked
-    category: 'Core Reality Wave'
+    category: 'Core Reality Wave',
+    audioUrl: 'anxiety-crusher.mp3'
   },
   {
     id: 'emergency-reset',
     name: 'Emergency Reset™',
-    description: 'Quick anxiety pattern interrupt for immediate relief',
-    subtitle: 'Rapid reset protocol for instant clarity',
+    description: 'Quick anxiety pattern interrupt',
+    detailedDescription: 'Rapid reset protocol for immediate anxiety relief. Use whenever you need instant clarity.',
+    technicalDetails: 'Concentrated Reality Wave burst for fast results',
+    subtitle: 'Instant Pattern Interrupt',
     duration: 3,
     requiredTier: SubscriptionTier.FREE,  // Base package - already unlocked
-    category: 'Core Reality Wave'
+    category: 'Core Reality Wave',
+    audioUrl: 'emergency-reset.mp3'
   },
   // Bonus Content (Free)
   ...BONUS_TRACKS.map(track => ({
@@ -31,41 +37,53 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
   })),
   // Advanced Package
   {
-    id: 'deep-reality',
+    id: 'deep-programming',
     name: 'Deep Reality Programming™',
-    description: 'Overnight transformation protocol for deep mental reprogramming',
-    subtitle: 'Progressive frequency pattern optimized for sleep cycles',
+    description: 'Overnight transformation protocol',
+    detailedDescription: 'Extended Reality Wave session designed for deep mental reprogramming during sleep',
+    technicalDetails: 'Progressive frequency pattern optimized for sleep cycles',
+    subtitle: 'Deep Neural Repatterning',
     duration: 30,
     requiredTier: SubscriptionTier.ADVANCED,
-    category: 'Advanced Reality Wave'
+    category: 'Advanced Reality Wave',
+    audioUrl: 'deep-programming.mp3'
   },
   {
-    id: 'success-field',
+    id: 'success-field-generator',
     name: 'Success Field Generator™',
-    description: 'Peak performance state activation for total clarity',
-    subtitle: 'Multi-layer Reality Wave combination for enhanced results',
+    description: 'Peak performance state activation',
+    detailedDescription: 'Advanced frequency blend for important moments requiring total clarity',
+    technicalDetails: 'Multi-layer Reality Wave combination for enhanced results',
+    subtitle: 'Peak State Activation',
     duration: 15,
     requiredTier: SubscriptionTier.ADVANCED,
-    category: 'Advanced Reality Wave'
+    category: 'Advanced Reality Wave',
+    audioUrl: 'success-field-generator.mp3'
   },
   // Daily Optimizer Package
   {
-    id: 'morning-field',
+    id: 'morning-reality-field',
     name: 'Morning Reality Field™',
-    description: 'Start Strong Protocol for daily reality pattern setting',
-    subtitle: 'Awakening frequency blend with energy optimization',
+    description: 'Start Strong Protocol',
+    detailedDescription: 'Morning activation sequence to set your day\'s reality pattern',
+    technicalDetails: 'Awakening frequency blend with energy optimization',
+    subtitle: 'Morning Power Protocol',
     duration: 7,
     requiredTier: SubscriptionTier.DAILY,
-    category: 'Daily Optimizer'
+    category: 'Daily Reality Control',
+    audioUrl: 'morning-reality-field.mp3'
   },
   {
     id: 'evening-integration',
     name: 'Evening Integration™',
-    description: 'Sleep Field & Reality Mapping for deep regenerative sleep',
-    subtitle: 'Calming frequency pattern for optimal rest',
+    description: 'Sleep Field & Reality Mapping',
+    detailedDescription: 'Process your day and prepare for deep regenerative sleep',
+    technicalDetails: 'Calming frequency pattern for optimal rest',
+    subtitle: 'Evening Reset Protocol',
     duration: 10,
     requiredTier: SubscriptionTier.DAILY,
-    category: 'Daily Optimizer'
+    category: 'Daily Reality Control',
+    audioUrl: 'evening-integration.mp3'
   }
 ];
 
