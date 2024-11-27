@@ -106,8 +106,30 @@ export const BONUS_TRACKS: Omit<AudioTrackAccess, 'requiredTier'>[] = [
     detailedDescription: 'Perfect for immediate anxiety relief when you need it most.',
     technicalDetails: 'Concentrated burst of calming frequencies',
     subtitle: 'Instant Relief',
-    duration: 1,
-    category: 'Bonus Reality Waves',
-    audioUrl: 'quick-reset.mp3'
+    duration: 60,
+    category: 'FOCUS ENHANCEMENT',
+    audioUrl: 'bonus-quick-reset.mp3'
+  },
+  {
+    id: 'power-pause',
+    name: 'Power Pause™',
+    description: 'Recharge your mental energy in 2 minutes',
+    detailedDescription: 'A quick mental recharge to boost your focus and clarity.',
+    technicalDetails: 'Optimized alpha wave pattern for rapid mental refresh',
+    subtitle: 'Quick Energy Boost',
+    duration: 120,
+    category: 'DAILY OPTIMIZATION',
+    audioUrl: 'bonus-power-pause.mp3'
+  },
+  {
+    id: 'sleep-starter',
+    name: 'Sleep Starter™',
+    description: 'Gentle transition to restful sleep',
+    detailedDescription: 'Wind down naturally with calming frequencies that prepare your mind for sleep.',
+    technicalDetails: 'Delta wave progression with theta overlay',
+    subtitle: 'Natural Sleep Aid',
+    duration: 300,
+    category: 'SLEEP & RECOVERY',
+    audioUrl: 'bonus-sleep-starter.mp3'
   }
 ];

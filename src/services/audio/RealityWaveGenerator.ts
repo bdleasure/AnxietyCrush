@@ -11,6 +11,10 @@ const AUDIO_SOURCES = {
   successField: require('../../../assets/audio/success-field-generator.mp3'),
   morningField: require('../../../assets/audio/morning-reality-field.mp3'),
   eveningIntegration: require('../../../assets/audio/evening-integration.mp3'),
+  // Bonus tracks
+  quickReset: require('../../../assets/audio/bonus-quick-reset.mp3'),
+  powerPause: require('../../../assets/audio/bonus-power-pause.mp3'),
+  sleepStarter: require('../../../assets/audio/bonus-sleep-starter.mp3'),
 } as const;
 
 // Map track IDs to audio sources
@@ -21,6 +25,10 @@ const TRACK_AUDIO_MAP: Record<string, number> = {
   'success-field': AUDIO_SOURCES.successField,
   'morning-field': AUDIO_SOURCES.morningField,
   'evening-integration': AUDIO_SOURCES.eveningIntegration,
+  // Bonus tracks
+  'quick-reset': AUDIO_SOURCES.quickReset,
+  'power-pause': AUDIO_SOURCES.powerPause,
+  'sleep-starter': AUDIO_SOURCES.sleepStarter,
 };
 
 export interface AudioTrack {
