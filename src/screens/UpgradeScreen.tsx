@@ -18,23 +18,23 @@ import { useNavigation } from '@react-navigation/native';
 
 // Create smaller versions of Typography components for the upgrade screen
 const SmallH1 = ({ style, ...props }) => (
-  <H1 {...props} style={[{ fontSize: 22 }, style]} />
+  <H1 {...props} style={[{ fontSize: 20 }, style]} />
 );
 
 const SmallH2 = ({ style, ...props }) => (
-  <H2 {...props} style={[{ fontSize: 19 }, style]} />
+  <H2 {...props} style={[{ fontSize: 17 }, style]} />
 );
 
 const SmallH3 = ({ style, ...props }) => (
-  <H3 {...props} style={[{ fontSize: 16 }, style]} />
+  <H3 {...props} style={[{ fontSize: 15 }, style]} />
 );
 
 const SmallBodyLarge = ({ style, ...props }) => (
-  <BodyLarge {...props} style={[{ fontSize: 15 }, style]} />
+  <BodyLarge {...props} style={[{ fontSize: 14 }, style]} />
 );
 
 const SmallBodyMedium = ({ style, ...props }) => (
-  <BodyMedium {...props} style={[{ fontSize: 13 }, style]} />
+  <BodyMedium {...props} style={[{ fontSize: 12 }, style]} />
 );
 
 const SmallBodySmall = ({ style, ...props }) => (
@@ -85,13 +85,17 @@ const UpgradeScreen = () => {
               >
                 <View style={styles.planHeader}>
                   <View style={styles.planTitleRow}>
-                    <SmallH2 style={styles.planTitle}>{plan.name}</SmallH2>
-                    <SmallBodyLarge style={styles.planPrice}>{plan.price}</SmallBodyLarge>
+                    <View style={styles.planTitleContainer}>
+                      <SmallH2 style={[styles.planTitle, styles.categoryTitle]}>{plan.name}</SmallH2>
+                      <SmallBodyMedium style={[styles.planDescription, styles.categoryDescription]}>{plan.description}</SmallBodyMedium>
+                      {plan.positioning && (
+                        <SmallBodyMedium style={styles.positioning}>{plan.positioning}</SmallBodyMedium>
+                      )}
+                    </View>
+                    <View style={styles.priceContainer}>
+                      <SmallBodyLarge style={styles.planPrice}>{plan.price}</SmallBodyLarge>
+                    </View>
                   </View>
-                  <SmallBodyMedium style={styles.planDescription}>{plan.description}</SmallBodyMedium>
-                  {plan.positioning && (
-                    <SmallBodyMedium style={styles.positioning}>{plan.positioning}</SmallBodyMedium>
-                  )}
                   {selectedPackages.has(plan.tier) && (
                     <View style={styles.selectedBadge}>
                       <SmallBodySmall style={styles.selectedText}>Selected</SmallBodySmall>
@@ -102,14 +106,17 @@ const UpgradeScreen = () => {
                 <View style={styles.planFeatures}>
                   {plan.features.map((feature, index) => (
                     <View key={index} style={styles.featureItem}>
-                      <SmallBodyMedium style={styles.featureTitle}>✓ {feature.title}</SmallBodyMedium>
+                      <View>
+                        <SmallBodyMedium style={styles.featureTitle}>✓ {feature.title.split('(')[0].trim()}</SmallBodyMedium>
+                        <SmallBodyMedium style={styles.duration}>({feature.title.split('(')[1]}</SmallBodyMedium>
+                      </View>
                       <SmallBodySmall style={styles.featureSubtitle}>{feature.subtitle}</SmallBodySmall>
                       {(feature.perfectFor || feature.keyBenefit) && (
                         <View style={styles.benefitContainer}>
                           {feature.perfectFor && (
                             <View style={styles.benefitRow}>
                               <SmallBodySmall style={styles.benefitLabel}>Perfect for:</SmallBodySmall>
-                              <SmallBodySmall style={styles.benefitText}>{feature.perfectFor}</SmallBodySmall>
+                              <SmallBodySmall style={[styles.benefitText, styles.perfectForText]}>{feature.perfectFor}</SmallBodySmall>
                             </View>
                           )}
                           {feature.keyBenefit && (
@@ -208,6 +215,7 @@ const styles = StyleSheet.create({
   description: {
     textAlign: 'center',
     marginBottom: 24,
+    color: colors.textPrimary,
   },
   benefitsList: {
     marginBottom: 24,
@@ -238,7 +246,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: colors.cardBackground,
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
     ...Platform.select({
@@ -261,28 +269,39 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   planHeader: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   planTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  planTitleContainer: {
+    flex: 1,
+    marginRight: 16,
+  },
+  priceContainer: {
+    minWidth: 80,
+    alignItems: 'flex-end',
   },
   planTitle: {
     marginBottom: 4,
   },
-  planPrice: {
-    color: colors.accent,
+  categoryTitle: {
+    color: colors.accent,  // Using the gold accent color
+  },
+  categoryDescription: {
+    color: colors.textPrimary,  // Using white color for description
   },
   planDescription: {
-    color: colors.textSecondary,
+    color: colors.textPrimary,
     marginBottom: 8,
   },
   positioning: {
     color: colors.accent,
-    marginTop: 8,
-    marginBottom: 12,
+    marginTop: 4,
+    marginBottom: 8,
     fontStyle: 'italic',
   },
   planFeatures: {
@@ -292,15 +311,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   featureTitle: {
-    marginBottom: 4,
+    marginBottom: 2,
     fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  duration: {
+    marginBottom: 8,
+    color: colors.textPrimary,
+    fontSize: 11,
   },
   featureSubtitle: {
-    color: colors.textSecondary,
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   featureDetails: {
-    color: colors.textSecondary,
+    color: colors.textPrimary,
     fontSize: 12,
     fontStyle: 'italic',
   },
@@ -313,17 +338,22 @@ const styles = StyleSheet.create({
   },
   benefitRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
+    alignItems: 'flex-start',
+    marginBottom: 8,
   },
   benefitLabel: {
-    color: colors.textSecondary,
+    color: colors.textPrimary,
     marginRight: 8,
     fontWeight: '600',
+    minWidth: 70,
   },
   benefitText: {
     color: colors.textPrimary,
     flex: 1,
+    lineHeight: 16,
+  },
+  perfectForText: {
+    paddingRight: 8,
   },
   selectedBadge: {
     backgroundColor: colors.accent,
