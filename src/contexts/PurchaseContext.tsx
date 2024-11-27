@@ -5,14 +5,14 @@ import { SubscriptionTier } from '../services/subscription/types';
 import { verifyPurchase, upgradeTier as upgradeTierService } from '../services/purchase/purchaseService';
 
 interface PurchaseContextType {
-  currentTier: SubscriptionTier;
+  ownedTiers: Set<SubscriptionTier>;
   selectedPackages: Set<SubscriptionTier>;
   isLoading: boolean;
-  hasDailyOptimizer: boolean;
   totalPrice: number;
   togglePackageSelection: (tier: SubscriptionTier) => void;
   purchaseSelectedPackages: () => Promise<void>;
   clearSelection: () => void;
+  hasTier: (tier: SubscriptionTier) => boolean;
 }
 
 const PurchaseContext = createContext<PurchaseContextType | undefined>(undefined);
@@ -26,24 +26,28 @@ export const usePurchase = () => {
 };
 
 export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentTier, setCurrentTier] = useState<SubscriptionTier>(SubscriptionTier.FREE);
+  const [ownedTiers, setOwnedTiers] = useState<Set<SubscriptionTier>>(new Set([SubscriptionTier.FREE]));
   const [selectedPackages, setSelectedPackages] = useState<Set<SubscriptionTier>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
-  const [hasDailyOptimizer, setHasDailyOptimizer] = useState(false);
+
+  // Helper function to check if a tier is owned
+  const hasTier = useCallback((tier: SubscriptionTier) => {
+    return ownedTiers.has(tier);
+  }, [ownedTiers]);
 
   // Calculate total price based on selected packages
   const calculateTotalPrice = useCallback(() => {
     let total = 0;
     selectedPackages.forEach(tier => {
       switch (tier) {
-        case SubscriptionTier.CORE:
+        case SubscriptionTier.ESSENTIALS:
           total += 39;
           break;
         case SubscriptionTier.ADVANCED:
           total += 79;
           break;
         case SubscriptionTier.DAILY:
-          total += 29;
+          total += 149;
           break;
       }
     });
@@ -51,6 +55,9 @@ export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [selectedPackages]);
 
   const togglePackageSelection = useCallback((tier: SubscriptionTier) => {
+    // Don't allow selecting already owned tiers
+    if (hasTier(tier)) return;
+
     setSelectedPackages(prev => {
       const newSelection = new Set(prev);
       if (newSelection.has(tier)) {
@@ -60,7 +67,7 @@ export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       return newSelection;
     });
-  }, []);
+  }, [hasTier]);
 
   const clearSelection = useCallback(() => {
     setSelectedPackages(new Set());
@@ -80,26 +87,15 @@ export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Process each selected package
       for (const tier of selectedPackages) {
         await upgradeTierService(tier);
-        
-        if (tier === SubscriptionTier.DAILY) {
-          setHasDailyOptimizer(true);
-          await AsyncStorage.setItem('hasDailyOptimizer', 'true');
-        }
       }
 
-      // Update to the highest tier purchased
-      const highestTier = Array.from(selectedPackages).reduce((highest, current) => {
-        const tierOrder = {
-          [SubscriptionTier.FREE]: 0,
-          [SubscriptionTier.CORE]: 1,
-          [SubscriptionTier.ADVANCED]: 2,
-          [SubscriptionTier.DAILY]: 3,
-        };
-        return tierOrder[current] > tierOrder[highest] ? current : highest;
-      }, SubscriptionTier.FREE);
+      // Add newly purchased tiers to owned tiers
+      const newOwnedTiers = new Set(ownedTiers);
+      selectedPackages.forEach(tier => newOwnedTiers.add(tier));
+      setOwnedTiers(newOwnedTiers);
 
-      setCurrentTier(highestTier);
-      await AsyncStorage.setItem('subscriptionTier', highestTier);
+      // Save owned tiers to storage
+      await AsyncStorage.setItem('ownedTiers', JSON.stringify(Array.from(newOwnedTiers)));
 
       showMessage({
         message: 'Purchase successful!',
@@ -107,32 +103,29 @@ export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         type: 'success',
       });
 
+      // Clear selection after successful purchase
       clearSelection();
     } catch (error) {
       showMessage({
         message: 'Purchase failed',
-        description: 'Please try again later',
+        description: error instanceof Error ? error.message : 'Please try again later',
         type: 'danger',
       });
     } finally {
       setIsLoading(false);
     }
-  }, [selectedPackages, clearSelection]);
+  }, [selectedPackages, ownedTiers, clearSelection]);
 
   // Initial load of purchase state
   React.useEffect(() => {
     const loadPurchaseState = async () => {
       try {
-        const [storedTier, storedOptimizer] = await Promise.all([
-          AsyncStorage.getItem('subscriptionTier'),
-          AsyncStorage.getItem('hasDailyOptimizer'),
-        ]);
-
-        if (storedTier) {
-          setCurrentTier(storedTier as SubscriptionTier);
-        }
+        const storedTiers = await AsyncStorage.getItem('ownedTiers');
         
-        setHasDailyOptimizer(storedOptimizer === 'true');
+        if (storedTiers) {
+          const parsedTiers = JSON.parse(storedTiers);
+          setOwnedTiers(new Set(parsedTiers));
+        }
       } catch (error) {
         console.error('Error loading purchase state:', error);
       } finally {
@@ -146,14 +139,14 @@ export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   return (
     <PurchaseContext.Provider
       value={{
-        currentTier,
+        ownedTiers,
         selectedPackages,
         isLoading,
-        hasDailyOptimizer,
         totalPrice: calculateTotalPrice(),
         togglePackageSelection,
         purchaseSelectedPackages,
         clearSelection,
+        hasTier,
       }}
     >
       {children}

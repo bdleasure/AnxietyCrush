@@ -14,8 +14,8 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
     technicalDetails: 'Precision-engineered Alpha frequency with optional ambient background',
     subtitle: 'Primary Reality Wave Technology',
     duration: 11,
-    requiredTier: SubscriptionTier.FREE,  // Base package - already unlocked
-    category: 'Core Reality Wave',
+    requiredTier: SubscriptionTier.ESSENTIALS,  // Base package - already unlocked
+    category: 'Reality Wave™ Essentials',
     audioUrl: 'anxiety-crusher.mp3'
   },
   {
@@ -26,8 +26,8 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
     technicalDetails: 'Concentrated Reality Wave burst for fast results',
     subtitle: 'Instant Pattern Interrupt',
     duration: 3,
-    requiredTier: SubscriptionTier.FREE,  // Base package - already unlocked
-    category: 'Core Reality Wave',
+    requiredTier: SubscriptionTier.ESSENTIALS,  // Base package - already unlocked
+    category: 'Reality Wave™ Essentials',
     audioUrl: 'emergency-reset.mp3'
   },
   // Bonus Content (Free)
@@ -45,7 +45,7 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
     subtitle: 'Deep Neural Repatterning',
     duration: 30,
     requiredTier: SubscriptionTier.ADVANCED,
-    category: 'Advanced Reality Wave',
+    category: 'Advanced Reality Wave™ System',
     audioUrl: 'deep-programming.mp3'
   },
   {
@@ -57,7 +57,7 @@ export const AUDIO_TRACKS: AudioTrackAccess[] = [
     subtitle: 'Peak State Activation',
     duration: 15,
     requiredTier: SubscriptionTier.ADVANCED,
-    category: 'Advanced Reality Wave',
+    category: 'Advanced Reality Wave™ System',
     audioUrl: 'success-field-generator.mp3'
   },
   // Daily Optimizer Package
@@ -93,7 +93,7 @@ export const FEATURES: Feature[] = [
     id: 'core-wave',
     name: 'Core Reality Wave™',
     description: 'Transform anxiety into reality-bending power',
-    requiredTier: SubscriptionTier.FREE,  // Base package - already unlocked
+    requiredTier: SubscriptionTier.ESSENTIALS,  // Base package - already unlocked
     category: FeatureCategory.AUDIO
   },
   {
@@ -120,7 +120,9 @@ export const FEATURES: Feature[] = [
 ];
 
 class FeatureAccess {
-  private userTier: SubscriptionTier = SubscriptionTier.FREE;  // Everyone starts with Core package
+  // For development: start with Reality Wave™ Essentials ($39) unlocked
+  // In production, this will be SubscriptionTier.FREE
+  private userTier: SubscriptionTier = SubscriptionTier.ESSENTIALS;
 
   setSubscriptionTier(tier: SubscriptionTier) {
     this.userTier = tier;
@@ -136,9 +138,10 @@ class FeatureAccess {
     if (!feature) return false;
 
     const tierLevels = {
-      [SubscriptionTier.FREE]: 0,     // Base level - includes Core Reality Wave and Bonus content
-      [SubscriptionTier.ADVANCED]: 1,  // Advanced package
-      [SubscriptionTier.DAILY]: 2     // Daily optimizer package
+      [SubscriptionTier.FREE]: 0,       // Free tier - Bonus content only
+      [SubscriptionTier.ESSENTIALS]: 1,  // Reality Wave™ Essentials ($39)
+      [SubscriptionTier.ADVANCED]: 2,    // Advanced package
+      [SubscriptionTier.DAILY]: 3        // Daily optimizer package
     };
 
     return tierLevels[this.userTier] >= tierLevels[feature.requiredTier];
@@ -153,16 +156,18 @@ class FeatureAccess {
     }
     
     const tierLevel = {
-      [SubscriptionTier.FREE]: 0,     // Base level - includes Core Reality Wave and Bonus content
-      [SubscriptionTier.ADVANCED]: 1,  // Advanced package
-      [SubscriptionTier.DAILY]: 2     // Daily optimizer package
+      [SubscriptionTier.FREE]: 0,       // Free tier - Bonus content only
+      [SubscriptionTier.ESSENTIALS]: 1,  // Reality Wave™ Essentials ($39)
+      [SubscriptionTier.ADVANCED]: 2,    // Advanced package
+      [SubscriptionTier.DAILY]: 3        // Daily optimizer package
     };
     
     return tierLevel[this.userTier] >= tierLevel[track.requiredTier];
   }
 
   getAvailableTracks(): AudioTrackAccess[] {
-    return AUDIO_TRACKS.filter(track => this.hasAccessToTrack(track.id));
+    // Return all tracks, both available and locked
+    return AUDIO_TRACKS;
   }
 
   // Get all available features for current user
@@ -183,6 +188,7 @@ class FeatureAccess {
   getNextUpgradeTier(): SubscriptionTier | null {
     const tierOrder = [
       SubscriptionTier.FREE,
+      SubscriptionTier.ESSENTIALS,
       SubscriptionTier.ADVANCED,
       SubscriptionTier.DAILY
     ];

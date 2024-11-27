@@ -22,7 +22,7 @@ export interface SubscriptionPlan {
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
-    tier: SubscriptionTier.CORE,
+    tier: SubscriptionTier.ESSENTIALS,
     name: 'Reality Wave™ Essentials',
     price: '$39',
     description: 'Core Audio Files',
@@ -53,45 +53,53 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     tier: SubscriptionTier.ADVANCED,
     name: 'Advanced Reality Wave™ System',
     price: '$79',
-    description: 'Includes Basic Package Plus:',
-    positioning: 'Master-level frequencies for complete anxiety transformation and reality control',
+    description: 'Advanced Audio Files',
+    positioning: 'Advanced tools for deep neural reprogramming',
     features: [
-      { 
+      {
         title: 'Deep Reality Programming™ (30 minutes)',
-        subtitle: 'Overnight transformation protocol for deep anxiety reprogramming',
+        subtitle: 'Overnight transformation protocol',
         included: true,
-        perfectFor: 'Deep mental repatterning',
-        keyBenefit: 'Long-term transformation'
+        perfectFor: 'Deep mental reprogramming',
+        keyBenefit: 'Neural rewiring',
+        details: 'Extended Reality Wave session designed for deep mental reprogramming during sleep.',
+        technical: 'Progressive frequency pattern optimized for sleep cycles'
       },
       {
         title: 'Success Field Generator™ (15 minutes)',
-        subtitle: 'Advanced frequency blend for peak performance states',
+        subtitle: 'Peak performance state activation',
         included: true,
-        perfectFor: 'Important meetings/presentations',
-        keyBenefit: 'Performance enhancement'
+        perfectFor: 'Important moments',
+        keyBenefit: 'Peak state access',
+        details: 'Advanced frequency blend for important moments requiring total clarity.',
+        technical: 'Multi-layer Reality Wave combination for enhanced results'
       }
     ]
   },
   {
     tier: SubscriptionTier.DAILY,
     name: 'Daily Reality Control',
-    price: '$29',
-    description: 'Daily power routines for optimal reality control',
-    positioning: 'Daily power routines for consistent reality control',
+    price: '$149',
+    description: 'Daily Optimization Protocol',
+    positioning: 'Complete daily system for reality optimization',
     features: [
       {
         title: 'Morning Reality Field™ (7 minutes)',
-        subtitle: 'Start your day in a peak reality-bending state',
+        subtitle: 'Start your day in peak state',
         included: true,
-        perfectFor: 'Morning routine',
-        keyBenefit: 'Day optimization'
+        perfectFor: 'Morning optimization',
+        keyBenefit: 'Peak morning state',
+        details: 'Morning optimization protocol for laser-sharp focus and clarity.',
+        technical: 'Beta-enhanced Reality Wave pattern'
       },
       {
         title: 'Evening Integration Wave™ (10 minutes)',
-        subtitle: 'Process your day and prepare for regenerative sleep',
+        subtitle: 'Process and integrate your day',
         included: true,
         perfectFor: 'Evening wind-down',
-        keyBenefit: 'Sleep enhancement'
+        keyBenefit: 'Deep integration',
+        details: 'Evening wind-down and sleep preparation for optimal recovery.',
+        technical: 'Progressive Alpha-Delta blend'
       }
     ]
   }

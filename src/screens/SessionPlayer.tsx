@@ -14,6 +14,7 @@ import { RealityWaveGenerator } from '../services/audio/RealityWaveGenerator';
 import { colors } from '../theme/colors';
 import { BlurView } from 'expo-blur';
 import { featureAccess } from '../services/subscription/featureAccess';
+import { AUDIO_TRACKS } from '../services/subscription/featureAccess';
 import { AudioTrackAccess, SubscriptionTier } from '../services/subscription/types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AudioControls } from '../components/AudioControls';
@@ -25,19 +26,27 @@ import { H1, H2, H3, BodyMedium, BodySmall, Label } from '../components/shared/T
 import { Button } from '../components/shared/Button';
 import { useSettings } from '../contexts/SettingsContext';
 import { Ionicons } from '@expo/vector-icons';
-import { AUDIO_TRACKS } from '../services/subscription/featureAccess';
 
 const { width, height } = Dimensions.get('window');
 
+// Category display order
+const CATEGORY_ORDER = [
+  'Reality Wave™ Essentials',
+  'Advanced Reality Wave™ System',
+  'Daily Reality Control'
+] as const;
+
 // Category icons mapping
 const CATEGORY_ICONS = {
-  'Core Reality Wave': 'radio-outline',
-  'Advanced Reality Wave': 'star-outline',
+  'Reality Wave™ Essentials': 'radio-outline',
+  'Advanced Reality Wave™ System': 'star-outline',
+  'Daily Reality Control': 'time-outline',
 } as const;
 
 // Pre-compute grouped tracks - excluding bonus tracks
 const { availableTracks, lockedTracks } = (() => {
-  const allTracks = AUDIO_TRACKS.filter(track => track.category !== 'Bonus Reality Waves');
+  // Get all tracks from the service, including locked ones
+  const allTracks = featureAccess.getAvailableTracks().filter(track => track.category !== 'Bonus Reality Waves');
   return {
     availableTracks: allTracks.filter(track => featureAccess.hasAccessToTrack(track.id)),
     lockedTracks: allTracks.filter(track => !featureAccess.hasAccessToTrack(track.id))
@@ -45,7 +54,7 @@ const { availableTracks, lockedTracks } = (() => {
 })();
 
 // Pre-compute initial track
-const initialTrack = availableTracks[0] || AUDIO_TRACKS[0];
+const initialTrack = availableTracks[0] || featureAccess.getAvailableTracks()[0];
 
 const SessionPlayer: React.FC = () => {
   const { settings } = useSettings();
@@ -63,14 +72,15 @@ const SessionPlayer: React.FC = () => {
 
   // Group tracks by category - memoized
   const groupedTracks = useMemo(() => {
-    return [...availableTracks, ...lockedTracks].reduce((acc, track) => {
+    const allTracks = [...availableTracks, ...lockedTracks];
+    return allTracks.reduce((acc, track) => {
       if (!acc[track.category]) {
         acc[track.category] = [];
       }
       acc[track.category].push(track);
       return acc;
     }, {} as Record<string, AudioTrackAccess[]>);
-  }, []); // Empty dependency array since tracks are pre-computed
+  }, [availableTracks, lockedTracks]);
 
   // Format time as mm:ss (memoized)
   const formatTime = useCallback((seconds: number): string => {
@@ -264,61 +274,64 @@ const SessionPlayer: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {Object.entries(groupedTracks).map(([category, tracks]) => (
-          <View key={category} style={styles.categorySection}>
-            <View style={styles.categoryHeader}>
-              <Ionicons 
-                name={CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS] || 'radio-outline'} 
-                size={24} 
-                color={colors.accent} 
-              />
-              <H2 style={[styles.categoryTitle, { color: colors.accent }]}>{category}</H2>
-            </View>
-            
-            {tracks.map((track) => (
-              <Card 
-                key={track.id} 
-                style={[styles.trackCard, { borderWidth: 0 }]}
-                isSelected={selectedTrack?.id === track.id}
-              >
-                <TouchableOpacity
-                  onPress={() => handleTrackSelect(track)}
-                  style={styles.trackButton}
+        {CATEGORY_ORDER.map((category) => {
+          const tracks = groupedTracks[category] || [];
+          return tracks.length > 0 ? (
+            <View key={category} style={styles.categorySection}>
+              <View style={styles.categoryHeader}>
+                <Ionicons 
+                  name={CATEGORY_ICONS[category] || 'radio-outline'} 
+                  size={24} 
+                  color={colors.accent} 
+                />
+                <H2 style={[styles.categoryTitle, { color: colors.accent }]}>{category}</H2>
+              </View>
+              
+              {tracks.map((track) => (
+                <Card 
+                  key={track.id} 
+                  style={[styles.trackCard, { borderWidth: 0 }]}
+                  isSelected={selectedTrack?.id === track.id}
                 >
-                  {!featureAccess.hasAccessToTrack(track.id) && (
-                    <View style={styles.unlockContainer}>
-                      <Button
-                        label="Unlock"
-                        size="small"
-                        onPress={() => navigation.navigate('Upgrade')}
-                        style={styles.unlockButton}
-                      />
+                  <TouchableOpacity
+                    onPress={() => handleTrackSelect(track)}
+                    style={styles.trackButton}
+                  >
+                    {!featureAccess.hasAccessToTrack(track.id) && (
+                      <View style={styles.unlockContainer}>
+                        <Button
+                          label="Unlock"
+                          size="small"
+                          onPress={() => navigation.navigate('Upgrade')}
+                          style={styles.unlockButton}
+                        />
+                      </View>
+                    )}
+                    <View style={styles.trackInfo}>
+                      <H3 style={styles.trackTitle}>{track.name}</H3>
+                      <BodySmall style={styles.trackDuration}>
+                        {Math.floor(track.duration)} minutes
+                      </BodySmall>
+                      <BodyMedium style={styles.trackDescription}>
+                        {track.description}
+                      </BodyMedium>
+                      {track.detailedDescription && (
+                        <BodyMedium style={styles.detailedDescription}>
+                          {track.detailedDescription}
+                        </BodyMedium>
+                      )}
+                      {track.technicalDetails && (
+                        <BodyMedium style={styles.technicalDetails}>
+                          {track.technicalDetails}
+                        </BodyMedium>
+                      )}
                     </View>
-                  )}
-                  <View style={styles.trackInfo}>
-                    <H3 style={styles.trackTitle}>{track.name}</H3>
-                    <BodySmall style={styles.trackDuration}>
-                      {Math.floor(track.duration)} minutes
-                    </BodySmall>
-                    <BodyMedium style={styles.trackDescription}>
-                      {track.description}
-                    </BodyMedium>
-                    {track.detailedDescription && (
-                      <BodyMedium style={styles.detailedDescription}>
-                        {track.detailedDescription}
-                      </BodyMedium>
-                    )}
-                    {track.technicalDetails && (
-                      <BodyMedium style={styles.technicalDetails}>
-                        {track.technicalDetails}
-                      </BodyMedium>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              </Card>
-            ))}
-          </View>
-        ))}
+                  </TouchableOpacity>
+                </Card>
+              ))}
+            </View>
+          ) : null;
+        })}
       </ScrollView>
 
       <BlurView intensity={100} style={[styles.audioControlsContainer, { paddingBottom: insets.bottom + 60 }]} >

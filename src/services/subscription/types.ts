@@ -1,8 +1,8 @@
 export enum SubscriptionTier {
-  FREE = 'Free',
-  CORE = 'Core',
-  ADVANCED = 'Advanced',
-  DAILY = 'Daily'
+  FREE = 'Free',  // Bonus materials only
+  ESSENTIALS = 'Reality Wave™ Essentials',  // $39 package
+  ADVANCED = 'Advanced Reality Wave™ System',
+  DAILY = 'Daily Reality Control'
 }
 
 export interface Feature {

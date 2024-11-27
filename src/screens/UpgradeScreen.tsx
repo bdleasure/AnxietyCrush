@@ -52,6 +52,7 @@ const UpgradeScreen = () => {
     togglePackageSelection,
     purchaseSelectedPackages,
     clearSelection,
+    hasTier,
   } = usePurchase();
 
   const handlePurchase = async () => {
@@ -78,10 +79,10 @@ const UpgradeScreen = () => {
                 style={[
                   styles.planCard,
                   selectedPackages.has(plan.tier) && styles.selectedPlan,
-                  currentTier === plan.tier && styles.currentPlan,
+                  hasTier(plan.tier) && styles.purchasedPlan,
                 ]}
                 onPress={() => togglePackageSelection(plan.tier)}
-                disabled={currentTier === plan.tier || isLoading}
+                disabled={hasTier(plan.tier) || isLoading}
               >
                 <View style={styles.planHeader}>
                   <View style={styles.planTitleRow}>
@@ -93,10 +94,14 @@ const UpgradeScreen = () => {
                       )}
                     </View>
                     <View style={styles.priceContainer}>
-                      <SmallBodyLarge style={styles.planPrice}>{plan.price}</SmallBodyLarge>
+                      {hasTier(plan.tier) ? (
+                        <SmallBodyLarge style={styles.purchasedText}>Purchased</SmallBodyLarge>
+                      ) : (
+                        <SmallBodyLarge style={styles.planPrice}>{plan.price}</SmallBodyLarge>
+                      )}
                     </View>
                   </View>
-                  {selectedPackages.has(plan.tier) && (
+                  {selectedPackages.has(plan.tier) && !hasTier(plan.tier) && (
                     <View style={styles.selectedBadge}>
                       <SmallBodySmall style={styles.selectedText}>Selected</SmallBodySmall>
                     </View>
@@ -131,9 +136,9 @@ const UpgradeScreen = () => {
                   ))}
                 </View>
 
-                {currentTier === plan.tier && (
-                  <View style={styles.currentPlanBadge}>
-                    <SmallBodySmall style={styles.currentPlanText}>Current Plan</SmallBodySmall>
+                {hasTier(plan.tier) && (
+                  <View style={styles.purchasedBadge}>
+                    <SmallBodySmall style={styles.purchasedBadgeText}>Already Purchased</SmallBodySmall>
                   </View>
                 )}
               </TouchableOpacity>
@@ -265,8 +270,10 @@ const styles = StyleSheet.create({
     borderColor: colors.accent,
     borderWidth: 2,
   },
-  currentPlan: {
-    opacity: 0.8,
+  purchasedPlan: {
+    opacity: 0.9,
+    borderColor: colors.accent,
+    borderWidth: 1,
   },
   planHeader: {
     marginBottom: 12,
@@ -367,17 +374,23 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontWeight: '600',
   },
-  currentPlanBadge: {
+  purchasedBadge: {
     position: 'absolute',
     top: 10,
     right: 10,
     backgroundColor: colors.accent,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 12,
   },
-  currentPlanText: {
+  purchasedBadgeText: {
     color: colors.background,
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  purchasedText: {
+    color: colors.accent,
+    fontSize: 14,
     fontWeight: '600',
   },
   purchaseSummary: {
