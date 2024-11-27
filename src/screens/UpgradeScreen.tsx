@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Text,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { H1, H2, H3, BodyMedium, BodySmall, BodyLarge } from '../components/Typography';
@@ -14,7 +15,7 @@ import { colors } from '../theme/colors';
 import { SUBSCRIPTION_PLANS } from '../services/subscription/plans';
 import { SubscriptionTier } from '../services/subscription/types';
 import { usePurchase } from '../contexts/PurchaseContext';
-import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 // Create smaller versions of Typography components for the upgrade screen
 const SmallH1 = ({ style, ...props }) => (
@@ -41,8 +42,7 @@ const SmallBodySmall = ({ style, ...props }) => (
   <BodySmall {...props} style={[{ fontSize: 11 }, style]} />
 );
 
-const UpgradeScreen = () => {
-  const navigation = useNavigation();
+export const UpgradeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const {
     currentTier,
     selectedPackages,
@@ -61,119 +61,136 @@ const UpgradeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.content}>
-          <SmallH1 style={styles.title}>Transform Your Life</SmallH1>
-          
-          <View style={styles.valueProposition}>
-            <SmallH2 style={styles.subtitle}> One-Time Investment, Lifetime of Peace</SmallH2>
-            <SmallBodyMedium style={styles.description}>
-              Take control of your anxiety today with our revolutionary reality wave technology. 
-              Select the packages you want and transform your life instantly.
-            </SmallBodyMedium>
-          </View>
-
-          {SUBSCRIPTION_PLANS.map((plan) => (
-            <View key={`plan-container-${plan.tier.toLowerCase()}`}>
-              <TouchableOpacity
-                style={[
-                  styles.planCard,
-                  selectedPackages.has(plan.tier) && styles.selectedPlan,
-                  hasTier(plan.tier) && styles.purchasedPlan,
-                ]}
-                onPress={() => togglePackageSelection(plan.tier)}
-                disabled={hasTier(plan.tier) || isLoading}
-              >
-                <View style={styles.planHeader}>
-                  <View style={styles.planTitleRow}>
-                    <View style={styles.planTitleContainer}>
-                      <SmallH2 style={[styles.planTitle, styles.categoryTitle]}>{plan.name}</SmallH2>
-                      <SmallBodyMedium style={[styles.planDescription, styles.categoryDescription]}>{plan.description}</SmallBodyMedium>
-                      {plan.positioning && (
-                        <SmallBodyMedium style={styles.positioning}>{plan.positioning}</SmallBodyMedium>
-                      )}
-                    </View>
-                    <View style={styles.priceContainer}>
-                      {hasTier(plan.tier) ? (
-                        <SmallBodyLarge style={styles.purchasedText}>Purchased</SmallBodyLarge>
-                      ) : (
-                        <SmallBodyLarge style={styles.planPrice}>{plan.price}</SmallBodyLarge>
-                      )}
-                    </View>
-                  </View>
-                  {selectedPackages.has(plan.tier) && !hasTier(plan.tier) && (
-                    <View style={styles.selectedBadge}>
-                      <SmallBodySmall style={styles.selectedText}>Selected</SmallBodySmall>
-                    </View>
-                  )}
-                </View>
-                
-                <View style={styles.planFeatures}>
-                  {plan.features.map((feature, index) => (
-                    <View key={index} style={styles.featureItem}>
-                      <View>
-                        <SmallBodyMedium style={styles.featureTitle}>✓ {feature.title.split('(')[0].trim()}</SmallBodyMedium>
-                        <SmallBodyMedium style={styles.duration}>({feature.title.split('(')[1]}</SmallBodyMedium>
-                      </View>
-                      <SmallBodySmall style={styles.featureSubtitle}>{feature.subtitle}</SmallBodySmall>
-                      {(feature.perfectFor || feature.keyBenefit) && (
-                        <View style={styles.benefitContainer}>
-                          {feature.perfectFor && (
-                            <View style={styles.benefitRow}>
-                              <SmallBodySmall style={styles.benefitLabel}>Perfect for:</SmallBodySmall>
-                              <SmallBodySmall style={[styles.benefitText, styles.perfectForText]}>{feature.perfectFor}</SmallBodySmall>
-                            </View>
-                          )}
-                          {feature.keyBenefit && (
-                            <View style={styles.benefitRow}>
-                              <SmallBodySmall style={styles.benefitLabel}>Key benefit:</SmallBodySmall>
-                              <SmallBodySmall style={styles.benefitText}>{feature.keyBenefit}</SmallBodySmall>
-                            </View>
-                          )}
-                        </View>
-                      )}
-                    </View>
-                  ))}
-                </View>
-
-                {hasTier(plan.tier) && (
-                  <View style={styles.purchasedBadge}>
-                    <SmallBodySmall style={styles.purchasedBadgeText}>Already Purchased</SmallBodySmall>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
-          ))}
-
-          {selectedPackages.size > 0 && (
-            <View style={styles.purchaseSummary}>
-              <SmallH3 style={styles.summaryTitle}>Your Selection</SmallH3>
-              {Array.from(selectedPackages).map((tier) => (
-                <View key={tier} style={styles.selectedPackage}>
-                  <SmallBodyMedium>{SUBSCRIPTION_PLANS.find(p => p.tier === tier)?.name}</SmallBodyMedium>
-                  <SmallBodyMedium>{SUBSCRIPTION_PLANS.find(p => p.tier === tier)?.price}</SmallBodyMedium>
-                </View>
-              ))}
-              <View style={styles.totalRow}>
-                <SmallH3>Total</SmallH3>
-                <SmallH3>${totalPrice}</SmallH3>
-              </View>
-              <TouchableOpacity
-                style={[styles.purchaseButton, isLoading && styles.purchaseButtonDisabled]}
-                onPress={handlePurchase}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color={colors.background} />
-                ) : (
-                  <SmallBodyMedium style={styles.purchaseButtonText}>
-                    Purchase Selected Packages
-                  </SmallBodyMedium>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
+      <View style={styles.header}>
+        <View style={styles.closeButtonContainer}>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={({ pressed }) => [
+              styles.closeButton,
+              pressed && { opacity: 0.7 }
+            ]}
+          >
+            <Ionicons name="close" size={28} color={colors.accent} />
+          </Pressable>
         </View>
+        <SmallH1 style={styles.title}>Transform Your Life</SmallH1>
+      </View>
+      
+      <View style={styles.dismissHandle} />
+      
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.valueProposition}>
+          <SmallH2 style={styles.subtitle}> One-Time Investment, Lifetime of Peace</SmallH2>
+          <SmallBodyMedium style={styles.description}>
+            Take control of your anxiety today with our revolutionary reality wave technology. 
+            Select the packages you want and transform your life instantly.
+          </SmallBodyMedium>
+        </View>
+
+        {SUBSCRIPTION_PLANS.map((plan) => (
+          <View key={`plan-container-${plan.tier.toLowerCase()}`}>
+            <TouchableOpacity
+              style={[
+                styles.planCard,
+                selectedPackages.has(plan.tier) && styles.selectedPlan,
+                hasTier(plan.tier) && styles.purchasedPlan,
+              ]}
+              onPress={() => togglePackageSelection(plan.tier)}
+              disabled={hasTier(plan.tier) || isLoading}
+            >
+              <View style={styles.planHeader}>
+                <View style={styles.planTitleRow}>
+                  <View style={styles.planTitleContainer}>
+                    <SmallH2 style={[styles.planTitle, styles.categoryTitle]}>{plan.name}</SmallH2>
+                    <SmallBodyMedium style={[styles.planDescription, styles.categoryDescription]}>{plan.description}</SmallBodyMedium>
+                    {plan.positioning && (
+                      <SmallBodyMedium style={styles.positioning}>{plan.positioning}</SmallBodyMedium>
+                    )}
+                  </View>
+                  <View style={styles.priceContainer}>
+                    {hasTier(plan.tier) ? (
+                      <SmallBodyLarge style={styles.purchasedText}>Purchased</SmallBodyLarge>
+                    ) : (
+                      <SmallBodyLarge style={styles.planPrice}>{plan.price}</SmallBodyLarge>
+                    )}
+                  </View>
+                </View>
+                {selectedPackages.has(plan.tier) && !hasTier(plan.tier) && (
+                  <View style={styles.selectedBadge}>
+                    <SmallBodySmall style={styles.selectedText}>Selected</SmallBodySmall>
+                  </View>
+                )}
+              </View>
+                
+              <View style={styles.planFeatures}>
+                {plan.features.map((feature, index) => (
+                  <View key={index} style={styles.featureItem}>
+                    <View>
+                      <SmallBodyMedium style={styles.featureTitle}>✓ {feature.title.split('(')[0].trim()}</SmallBodyMedium>
+                      <SmallBodyMedium style={styles.duration}>({feature.title.split('(')[1]}</SmallBodyMedium>
+                    </View>
+                    <SmallBodySmall style={styles.featureSubtitle}>{feature.subtitle}</SmallBodySmall>
+                    {(feature.perfectFor || feature.keyBenefit) && (
+                      <View style={styles.benefitContainer}>
+                        {feature.perfectFor && (
+                          <View style={styles.benefitRow}>
+                            <SmallBodySmall style={styles.benefitLabel}>Perfect for:</SmallBodySmall>
+                            <SmallBodySmall style={[styles.benefitText, styles.perfectForText]}>{feature.perfectFor}</SmallBodySmall>
+                          </View>
+                        )}
+                        {feature.keyBenefit && (
+                          <View style={styles.benefitRow}>
+                            <SmallBodySmall style={styles.benefitLabel}>Key benefit:</SmallBodySmall>
+                            <SmallBodySmall style={styles.benefitText}>{feature.keyBenefit}</SmallBodySmall>
+                          </View>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+
+              {hasTier(plan.tier) && (
+                <View style={styles.purchasedBadge}>
+                  <SmallBodySmall style={styles.purchasedBadgeText}>Already Purchased</SmallBodySmall>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+        ))}
+
+        {selectedPackages.size > 0 && (
+          <View style={styles.purchaseSummary}>
+            <SmallH3 style={styles.summaryTitle}>Your Selection</SmallH3>
+            {Array.from(selectedPackages).map((tier) => (
+              <View key={tier} style={styles.selectedPackage}>
+                <SmallBodyMedium>{SUBSCRIPTION_PLANS.find(p => p.tier === tier)?.name}</SmallBodyMedium>
+                <SmallBodyMedium>{SUBSCRIPTION_PLANS.find(p => p.tier === tier)?.price}</SmallBodyMedium>
+              </View>
+            ))}
+            <View style={styles.totalRow}>
+              <SmallH3>Total</SmallH3>
+              <SmallH3>${totalPrice}</SmallH3>
+            </View>
+            <TouchableOpacity
+              style={[styles.purchaseButton, isLoading && styles.purchaseButtonDisabled]}
+              onPress={handlePurchase}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={colors.background} />
+              ) : (
+                <SmallBodyMedium style={styles.purchaseButtonText}>
+                  Purchase Selected Packages
+                </SmallBodyMedium>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -183,6 +200,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  header: {
+    paddingTop: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  closeButtonContainer: {
+    position: 'absolute',
+    top: 8,
+    right: 16,
+    zIndex: 1,
+  },
+  closeButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: colors.cardBackground,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dismissHandle: {
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.border,
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 8,
   },
   scrollView: {
     flex: 1,

@@ -254,7 +254,7 @@ const SessionPlayer: React.FC<{ navigation: any }> = ({ navigation }) => {
         { text: 'Not Now', style: 'cancel' },
         { 
           text: 'Upgrade',
-          onPress: () => navigation.navigate('Upgrade')
+          onPress: () => navigation.navigate('upgrade')
         }
       ]
     );
@@ -300,7 +300,7 @@ const SessionPlayer: React.FC<{ navigation: any }> = ({ navigation }) => {
                         <Button
                           label="Unlock"
                           size="small"
-                          onPress={() => navigation.navigate('Upgrade')}
+                          onPress={() => navigation.navigate('upgrade')}
                           style={styles.unlockButton}
                         />
                       </View>
