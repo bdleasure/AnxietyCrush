@@ -94,8 +94,9 @@ export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       selectedPackages.forEach(tier => newOwnedTiers.add(tier));
       setOwnedTiers(newOwnedTiers);
 
-      // Save owned tiers to storage
-      await AsyncStorage.setItem('ownedTiers', JSON.stringify(Array.from(newOwnedTiers)));
+      // Save owned tiers to storage - convert enum values to strings
+      const tiersArray = Array.from(newOwnedTiers).map(tier => tier.toString());
+      await AsyncStorage.setItem('ownedTiers', JSON.stringify(tiersArray));
 
       showMessage({
         message: 'Purchase successful!',
@@ -124,10 +125,18 @@ export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         
         if (storedTiers) {
           const parsedTiers = JSON.parse(storedTiers);
-          setOwnedTiers(new Set(parsedTiers));
+          // Convert the array of strings back to SubscriptionTier enum values
+          const tiers = new Set(parsedTiers.map((tier: string) => SubscriptionTier[tier as keyof typeof SubscriptionTier]));
+          setOwnedTiers(tiers);
+        } else {
+          // For development, set ESSENTIALS as owned by default
+          setOwnedTiers(new Set([SubscriptionTier.FREE, SubscriptionTier.ESSENTIALS]));
+          await AsyncStorage.setItem('ownedTiers', JSON.stringify([SubscriptionTier.FREE.toString(), SubscriptionTier.ESSENTIALS.toString()]));
         }
       } catch (error) {
         console.error('Error loading purchase state:', error);
+        // Fallback to default state
+        setOwnedTiers(new Set([SubscriptionTier.FREE, SubscriptionTier.ESSENTIALS]));
       } finally {
         setIsLoading(false);
       }
