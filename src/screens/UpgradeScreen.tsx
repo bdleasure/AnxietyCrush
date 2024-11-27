@@ -88,6 +88,10 @@ const UpgradeScreen = () => {
                     <SmallH2 style={styles.planTitle}>{plan.name}</SmallH2>
                     <SmallBodyLarge style={styles.planPrice}>{plan.price}</SmallBodyLarge>
                   </View>
+                  <SmallBodyMedium style={styles.planDescription}>{plan.description}</SmallBodyMedium>
+                  {plan.positioning && (
+                    <SmallBodyMedium style={styles.positioning}>{plan.positioning}</SmallBodyMedium>
+                  )}
                   {selectedPackages.has(plan.tier) && (
                     <View style={styles.selectedBadge}>
                       <SmallBodySmall style={styles.selectedText}>Selected</SmallBodySmall>
@@ -98,10 +102,23 @@ const UpgradeScreen = () => {
                 <View style={styles.planFeatures}>
                   {plan.features.map((feature, index) => (
                     <View key={index} style={styles.featureItem}>
-                      <SmallBodyMedium style={styles.featureTitle}> {feature.title}</SmallBodyMedium>
+                      <SmallBodyMedium style={styles.featureTitle}>✓ {feature.title}</SmallBodyMedium>
                       <SmallBodySmall style={styles.featureSubtitle}>{feature.subtitle}</SmallBodySmall>
-                      {feature.details && (
-                        <SmallBodySmall style={styles.featureDetails}>{feature.details}</SmallBodySmall>
+                      {(feature.perfectFor || feature.keyBenefit) && (
+                        <View style={styles.benefitContainer}>
+                          {feature.perfectFor && (
+                            <View style={styles.benefitRow}>
+                              <SmallBodySmall style={styles.benefitLabel}>Perfect for:</SmallBodySmall>
+                              <SmallBodySmall style={styles.benefitText}>{feature.perfectFor}</SmallBodySmall>
+                            </View>
+                          )}
+                          {feature.keyBenefit && (
+                            <View style={styles.benefitRow}>
+                              <SmallBodySmall style={styles.benefitLabel}>Key benefit:</SmallBodySmall>
+                              <SmallBodySmall style={styles.benefitText}>{feature.keyBenefit}</SmallBodySmall>
+                            </View>
+                          )}
+                        </View>
                       )}
                     </View>
                   ))}
@@ -258,6 +275,16 @@ const styles = StyleSheet.create({
   planPrice: {
     color: colors.accent,
   },
+  planDescription: {
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  positioning: {
+    color: colors.accent,
+    marginTop: 8,
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
   planFeatures: {
     marginBottom: 20,
   },
@@ -279,6 +306,24 @@ const styles = StyleSheet.create({
   },
   featureText: {
     marginBottom: 8,
+  },
+  benefitContainer: {
+    marginTop: 8,
+    paddingLeft: 8,
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  benefitLabel: {
+    color: colors.textSecondary,
+    marginRight: 8,
+    fontWeight: '600',
+  },
+  benefitText: {
+    color: colors.textPrimary,
+    flex: 1,
   },
   selectedBadge: {
     backgroundColor: colors.accent,

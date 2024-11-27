@@ -5,6 +5,8 @@ interface Feature {
   subtitle: string;
   included: boolean;
   details?: string;
+  perfectFor?: string;
+  keyBenefit?: string;
   technical?: string;
 }
 
@@ -14,27 +16,33 @@ export interface SubscriptionPlan {
   price: string;
   description: string;
   features: Feature[];
+  positioning?: string;
   popular?: boolean;
 }
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     tier: SubscriptionTier.CORE,
-    name: 'Core Reality Wave™',
+    name: 'Reality Wave™ Essentials',
     price: '$39',
-    description: 'Transform anxiety into reality-bending power with our signature Reality Wave technology',
+    description: 'Core Audio Files',
+    positioning: 'Your essential toolkit for transforming anxiety into reality-bending power',
     features: [
       { 
-        title: 'Anxiety Crusher™ (11 min)',
-        subtitle: 'Transform anxiety into reality-bending power',
+        title: 'Anxiety Crusher™ (11 minutes)',
+        subtitle: 'Transform anxiety into reality-bending power with our primary Reality Wave frequency',
         included: true,
+        perfectFor: 'Daily anxiety transformation',
+        keyBenefit: 'Core reality shifting',
         details: 'Our signature Reality Wave frequency (10 Hz Alpha) helps rewire your anxiety response into focused clarity. Perfect for daily transformation.',
         technical: 'Precision-engineered Alpha frequency with optional ambient background'
       },
       { 
-        title: 'Emergency Reset™ (3 min)',
-        subtitle: 'Quick anxiety pattern interrupt',
+        title: 'Emergency Reset™ (3 minutes)',
+        subtitle: 'Instant pattern interrupt for immediate clarity',
         included: true,
+        perfectFor: 'Urgent anxiety moments',
+        keyBenefit: 'Quick relief',
         details: 'Rapid reset protocol for immediate anxiety relief. Use whenever you need instant clarity.',
         technical: 'Concentrated Reality Wave burst for fast results'
       }
@@ -43,55 +51,47 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
   {
     tier: SubscriptionTier.ADVANCED,
-    name: 'Advanced Package',
+    name: 'Advanced Reality Wave™ System',
     price: '$79',
-    description: 'Advanced mastery with deep programming and peak performance protocols',
+    description: 'Includes Basic Package Plus:',
+    positioning: 'Master-level frequencies for complete anxiety transformation and reality control',
     features: [
       { 
-        title: 'Deep Reality Programming™ (30 min)',
-        subtitle: 'Overnight transformation protocol',
+        title: 'Deep Reality Programming™ (30 minutes)',
+        subtitle: 'Overnight transformation protocol for deep anxiety reprogramming',
         included: true,
-        details: 'Extended Reality Wave session designed for deep mental reprogramming during sleep',
-        technical: 'Progressive frequency pattern optimized for sleep cycles'
-      },
-      { 
-        title: 'Success Field Generator™ (15 min)',
-        subtitle: 'Peak performance state activation',
-        included: true,
-        details: 'Advanced frequency blend for important moments requiring total clarity',
-        technical: 'Multi-layer Reality Wave combination for enhanced results'
+        perfectFor: 'Deep mental repatterning',
+        keyBenefit: 'Long-term transformation'
       },
       {
-        title: 'Core Reality Wave™ Package',
-        subtitle: 'All Core features included',
-        included: true
+        title: 'Success Field Generator™ (15 minutes)',
+        subtitle: 'Advanced frequency blend for peak performance states',
+        included: true,
+        perfectFor: 'Important meetings/presentations',
+        keyBenefit: 'Performance enhancement'
       }
     ]
   },
   {
     tier: SubscriptionTier.DAILY,
-    name: 'Daily Optimizer',
+    name: 'Daily Reality Control',
     price: '$29',
-    description: 'Optimize your daily reality with morning and evening protocols',
+    description: 'Daily power routines for optimal reality control',
+    positioning: 'Daily power routines for consistent reality control',
     features: [
-      { 
-        title: 'Morning Reality Field™ (7 min)',
-        subtitle: 'Start Strong Protocol',
+      {
+        title: 'Morning Reality Field™ (7 minutes)',
+        subtitle: 'Start your day in a peak reality-bending state',
         included: true,
-        details: 'Morning activation sequence to set your day\'s reality pattern',
-        technical: 'Awakening frequency blend with energy optimization'
-      },
-      { 
-        title: 'Evening Integration™ (10 min)',
-        subtitle: 'Sleep Field & Reality Mapping',
-        included: true,
-        details: 'Evening protocol for deep regenerative sleep and reality integration',
-        technical: 'Calming frequency pattern for optimal rest'
+        perfectFor: 'Morning routine',
+        keyBenefit: 'Day optimization'
       },
       {
-        title: 'Core Reality Wave™ Package',
-        subtitle: 'All Core features included',
-        included: true
+        title: 'Evening Integration Wave™ (10 minutes)',
+        subtitle: 'Process your day and prepare for regenerative sleep',
+        included: true,
+        perfectFor: 'Evening wind-down',
+        keyBenefit: 'Sleep enhancement'
       }
     ]
   }
