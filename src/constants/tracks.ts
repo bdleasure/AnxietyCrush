@@ -102,32 +102,38 @@ export const DAILY_TRACKS: AudioTrackAccess[] = [
 export const BONUS_TRACKS: AudioTrackAccess[] = [
   {
     id: 'success-field',
-    name: 'Success Pattern Activator',
-    duration: 600,
-    description: 'Activate your natural success patterns',
+    name: 'Success Pattern Activator™',
+    duration: 600, // 10 minutes
+    description: 'Unlock your natural success frequency',
+    detailedDescription: 'Advanced Reality Wave blend designed to activate dormant success patterns in your neural pathways. Perfect for high-stakes moments and breakthrough decisions.',
+    technicalDetails: 'Multi-layered Alpha-Theta frequency combination with success pattern entrainment',
     requiredTier: SubscriptionTier.FREE,
     audioUrl: 'success-field-generator.mp3',
     category: 'Bonus Reality Waves',
-    subtitle: 'Unlock your natural success patterns'
+    subtitle: 'Success Pattern Activation'
   },
   {
     id: 'morning-field',
-    name: 'Morning Reality Field',
-    duration: 420,
+    name: 'Morning Reality Field™',
+    duration: 420, // 7 minutes
     description: 'Generate laser-sharp focus instantly',
+    detailedDescription: 'Start your day with crystal-clear mental clarity and reality-bending focus. Perfect for setting your day\'s success trajectory.',
+    technicalDetails: 'Beta-enhanced Reality Wave pattern for optimal morning activation',
     requiredTier: SubscriptionTier.FREE,
     audioUrl: 'morning-reality-field.mp3',
     category: 'Bonus Reality Waves',
-    subtitle: 'Start your day with peak mental clarity'
+    subtitle: 'Morning Focus Activation'
   },
   {
     id: 'evening-integration',
-    name: 'Evening Integration Wave',
-    duration: 600,
+    name: 'Evening Integration Wave™',
+    duration: 600, // 10 minutes
     description: 'Enhance your sleep quality naturally',
+    detailedDescription: 'Convert daily stress into deep restorative sleep while programming tomorrow\'s reality. Perfect for optimal recovery and next-day preparation.',
+    technicalDetails: 'Progressive Alpha-Delta blend for natural sleep enhancement',
     requiredTier: SubscriptionTier.PREMIUM,
     audioUrl: 'evening-integration.mp3',
     category: 'Bonus Reality Waves',
-    subtitle: 'Experience deep, restorative sleep'
+    subtitle: 'Evening Reset Protocol'
   }
 ];

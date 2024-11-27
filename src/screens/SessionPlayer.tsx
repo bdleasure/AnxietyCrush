@@ -272,7 +272,7 @@ const SessionPlayer: React.FC = () => {
                 size={24} 
                 color={colors.accent} 
               />
-              <H2 style={styles.categoryTitle}>{category}</H2>
+              <H2 style={[styles.categoryTitle, { color: colors.accent }]}>{category}</H2>
             </View>
             
             {tracks.map((track) => (
@@ -376,9 +376,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   categoryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    fontSize: 17,
     marginLeft: 12,
   },
   trackCard: {
